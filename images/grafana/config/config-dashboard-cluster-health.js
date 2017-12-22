@@ -593,12 +593,12 @@
             "tableColumn": "Value",
             "targets": [
               {
-                "expr": "count(swarm_node_manager)",
+                "expr": "avg(swarm_manager_nodes{state=\"ready\"}!=0)",
                 "format": "time_series",
                 "interval": "",
                 "intervalFactor": 2,
                 "legendFormat": "",
-                "metric": "swarm_node_manager",
+                "metric": "swarm_manager_nodes",
                 "refId": "A",
                 "step": 60
               }
@@ -693,7 +693,7 @@
                 "value": "null"
               }
             ],
-            "valueName": "avg"
+            "valueName": "current"
           },
           {
             "aliasColors": {},
@@ -712,17 +712,18 @@
               "show": true,
               "values": true
             },
-            "legendType": "Right side",
+            "legendType": "On graph",
             "links": [],
             "maxDataPoints": 3,
             "nullPointMode": "connected",
             "pieType": "pie",
-            "span": 4,
+            "span": 2,
             "strokeWidth": 1,
             "targets": [
               {
-                "expr": "avg(swarm_manager_nodes{job=\"docker-engine\"}) by (state)",
+                "expr": "avg(swarm_manager_nodes{job=\"docker-engine\"}!=0) by (state)",
                 "format": "time_series",
+                "instant": true,
                 "interval": "",
                 "intervalFactor": 2,
                 "legendFormat": "{{state}}",
@@ -731,10 +732,88 @@
                 "step": 2400
               }
             ],
-            "title": "Swarm Manager State",
+            "title": "Swarm Node State",
             "type": "grafana-piechart-panel",
             "valueName": "current"
-          }
+					},
+					{
+						"cacheTimeout": null,
+						"colorBackground": false,
+						"colorValue": false,
+						"colors": [
+							"#d44a3a",
+							"rgba(237, 129, 40, 0.89)",
+							"#299c46"
+						],
+						"datasource": null,
+						"decimals": 1,
+						"description": "Nodes with monitoring tasks (cAdvisor)",
+						"format": "percentunit",
+						"gauge": {
+							"maxValue": 1,
+							"minValue": 0,
+							"show": true,
+							"thresholdLabels": false,
+							"thresholdMarkers": false
+						},
+						"id": 79,
+						"interval": null,
+						"links": [],
+						"mappingType": 1,
+						"mappingTypes": [
+							{
+								"name": "value to text",
+								"value": 1
+							},
+							{
+								"name": "range to text",
+								"value": 2
+							}
+						],
+						"maxDataPoints": 100,
+						"nullPointMode": "connected",
+						"nullText": null,
+						"postfix": "",
+						"postfixFontSize": "50%",
+						"prefix": "",
+						"prefixFontSize": "50%",
+						"rangeMaps": [
+							{
+								"from": "null",
+								"text": "N/A",
+								"to": "null"
+							}
+						],
+						"span": 2,
+						"sparkline": {
+							"fillColor": "rgba(31, 118, 189, 0.18)",
+							"full": true,
+							"lineColor": "rgb(31, 120, 193)",
+							"show": true
+						},
+						"tableColumn": "",
+						"targets": [
+							{
+								"expr": "count(cadvisor_version_info) / max(swarm_manager_nodes{state=\"ready\"}!=0)",
+								"format": "time_series",
+								"intervalFactor": 2,
+								"legendFormat": "",
+								"refId": "A"
+							}
+						],
+						"thresholds": "0.2,0.99",
+						"title": "Monitoring coverage",
+						"type": "singlestat",
+						"valueFontSize": "80%",
+						"valueMaps": [
+							{
+								"op": "=",
+								"text": "N/A",
+								"value": "null"
+							}
+						],
+						"valueName": "current"
+					}
         ],
         "repeat": null,
         "repeatIteration": null,
@@ -1180,7 +1259,7 @@
             "steppedLine": false,
             "targets": [
               {
-                "expr": "100 - 100 * node_filesystem_free / node_filesystem_size{fstype=~\"xfs|ext4\",mountpoint=\"/rootfs/var/lib/docker\"}",
+                "expr": "100 - 100 * node_filesystem_free / node_filesystem_size{fstype=~\"overlay|xfs|ext4\",mountpoint=\"/\"}",
                 "format": "time_series",
                 "intervalFactor": 2,
                 "legendFormat": "{{instance}}",
