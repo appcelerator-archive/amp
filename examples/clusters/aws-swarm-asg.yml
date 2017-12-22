@@ -8,27 +8,27 @@ Mappings:
     # N Virginia
     us-east-1:
       Ubuntu: ami-e4139df2
-      Default: ami-2a5f2a50
+      Default: ami-793d7803
       Debian: ami-cb4b94dd
     # Ohio
     us-east-2:
       Ubuntu: ami-33ab8f56
-      Default: ami-db4c64be
+      Default: ami-2fac844a
       Debian: ami-c5ba9fa0
     # Oregon
     us-west-2:
       Ubuntu: ami-17ba2a77
-      Default: ami-f9cd6c81
+      Default: ami-12e24e6a
       Debian: ami-fde96b9d
     # Ireland
     eu-west-1:
       Ubuntu: ami-b5a893d3
-      Default: ami-2d7afe54
+      Default: ami-8d7df0f4
       Debian: ami-3291be54
     # Sydney
     ap-southeast-2:
       Ubuntu: ami-92e8e6f1
-      Default: ami-2afb0d48
+      Default: ami-19ba4a7b
       Debian: ami-0dcac96e
   VpcCidrs:
     subnet1:
@@ -1669,7 +1669,7 @@ Metadata:
         default: Shared File System
       RegistryInstanceType:
         default: Registry instance type?
-      RegistryInstanceType:
+      CAInstanceType:
         default: PKI instance type?
       MonitoringPort:
         default: Monitoring Port
