@@ -1,0 +1,243 @@
+#!/bin/bash
+
+SYNC=${SYNC:-false}
+if [[ -z "$REGION" ]]; then
+  echo "region is required"
+  exit 1
+fi
+if [[ -z "$STACK_NAME" ]]; then
+  echo "stack name is required"
+  exit 1
+fi
+# Optional values
+PORT="${PORT:-8888}"
+IMAGE_NAME="${IMAGE_NAME:-appcelerator/cfssl}"
+IMAGE_VERSION="${IMAGE_VERSION:-dev-20171208}"
+CONTAINER_NAME="cfssl"
+VOLUME_NAME="${REGION}_${STACK_NAME}_${STACK_ID##*/}_PKS"
+#SIGNAL_URL=
+#PLUGINS=
+EXPIRY_DEFAULT=168h
+EXPIRY_SERVER="${EXPIRY_SERVER:-168h}"
+EXPIRY_CLIENT="${EXPIRY_CLIENT:-8760h}"
+
+_init_system(){
+  systemctl --version >/dev/null 2>&1 && echo systemd && return
+  [[ `/sbin/init --version` =~ upstart ]] && echo upstart && return
+  echo sysv
+} 
+
+_install_docker(){
+  local _release=$(lsb_release -is)
+  local _host
+  # on Debian style systems, this checks that docker-ce is installed
+  grep -A1 docker-ce /var/lib/dpkg/status | grep -q "installed$"
+  if [[ $? -ne 0 ]]; then
+    case $CHANNEL in
+    stable) _host="get.docker.com" ;;
+    edge|beta|test) _host="test.docker.com" ;;
+    experimental) _host="experimental.docker.com" ;;
+    *) return 1 ;;
+    esac
+    echo "installing Docker from $_host" >&2
+    wget -qO- "https://$_host/" | sh || return 1
+  fi
+  [[ "x$_release" = "xUbuntu" ]] && usermod -G docker ubuntu 2>/dev/null
+  [[ "x$_release" = "xDebian" ]] && usermod -G docker admin  2>/dev/null
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl enable docker.service
+    docker version -f {{.Server.Version}} &>/dev/null || systemctl start docker.service
+  else
+    chkconfig docker on
+    docker version -f {{.Server.Version}} &>/dev/null || service docker start
+  fi
+  docker version >&2
+}
+
+# generates a CA. Echoes filepath of CA key and filepath of CA cert
+#TODO: remove the need for openssl and use cfssl for the ca generation
+_gen_ca(){
+  which openssl >/dev/null || return 1
+
+  CAKEY=$(mktemp).pem
+  CACERT=$(mktemp).pem
+  KEYLEN=2048
+  # 10 years validity for the CA
+  EXPIRE=3560
+  CASUBJECT="/C=US/ST=California/L=Santa Clara/O=Axway/OU=AMP/CN=ca-$(hostname)"
+
+  openssl genrsa -out $CAKEY $KEYLEN
+  openssl req -new -x509 -days $EXPIRE -key $CAKEY -sha256 -out $CACERT -subj "$CASUBJECT"
+  echo $CAKEY $CACERT
+}
+
+_install_plugins() {
+  local plugin
+  local alias
+  local options
+  for plugin in $PLUGINS; do
+    options="${plugin#*#}"
+    [[ "x$options" = "x$plugin" ]] && options="" || options="${options//\#/ }"
+    plugin="${plugin%%#*}"
+    alias=${plugin#store/}
+    alias=${alias%:*}
+    docker plugin ls | grep -q "$plugin" && continue
+    docker plugin install "$plugin" $options --alias "$alias" --grant-all-permissions # || return 1
+  done
+  return 0
+}
+
+_set_live_restore(){
+  local _live_restore=${1:-true}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  case $_live_restore in
+    true|false) true;;
+    *) echo "_set_live_restore only accepts true or false"
+       return 1
+       ;;
+  esac
+  _tmp=$(mktemp)
+  echo "setting live restore" >&2
+  cat /etc/docker/daemon.json | jq ".\"live-restore\" = $_live_restore" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_set_log_rotation(){
+  local _max_size=${1:-10m}
+  local _max_file=${2:-3}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  _tmp=$(mktemp)
+  echo "setting log rotation" >&2
+  cat /etc/docker/daemon.json | jq ".\"log-opts\".\"max-size\" = \"$_max_size\" | .\"log-opts\".\"max-file\" = \"$_max_file\"" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_set_metrics_address(){
+  local _host=${1:-127.0.0.1}
+  local _port=${2:-9323}
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  # bridge is most probably 172.17.0.1
+  if [[ "$_host" = "bridge" ]]; then
+    _host=$(ip route show dev docker0 | sed 's/.*src \([0-9\.]*\).*/\1/')
+    [[ -z "$_host" ]] && _host=0.0.0.0
+  fi
+  _tmp=$(mktemp)
+  echo "setting the metrics address ($_host:$_port)" >&2
+  cat /etc/docker/daemon.json | jq ".\"metrics-addr\" = \"${_host}:${_port}\" | .experimental = true" > "$_tmp" || return 1
+  mv "$_tmp" /etc/docker/daemon.json
+}
+
+_restart_docker(){
+  echo "restarting Docker" >&2
+  if [[ $(_init_system) = "systemd" ]]; then
+    systemctl restart docker.service
+  else
+    service docker restart
+  fi
+}
+
+
+# creates a volume if it doesn't already exist
+# add the CA key and cert to the volume at creation
+_create_volume(){
+  local _driver_opts
+  local _key
+  local _cert
+  local _config
+  # check if the volume already exists, in which case we reuse it
+  docker volume ls -q --filter name=^${VOLUME_NAME}$ | grep -q "$VOLUME_NAME"
+  if [[ $? -eq 0 ]]; then
+    echo "volume $VOLUME_NAME already exist, no change applied"
+    echo "volumes seen on this node:"
+    docker volume ls
+    echo "inspect volume $VOLUME_NAME"
+    docker volume inspect "$VOLUME_NAME"
+    return 0
+  fi
+  docker plugin ls | grep -q "rexray/ebs"
+  if [[ $? -eq 0 ]]; then
+    _driver_opts="--driver rexray/ebs"
+  fi
+  echo "creating volume $VOLUME_NAME with ${_driver_opts:-local driver}"
+  docker volume create $_driver_opts "$VOLUME_NAME" || return 1
+  # create the configuration file
+  _config=$(mktemp) || return 1
+  cat > $_config <<EOF
+{
+    "signing": {
+        "default": {
+            "expiry": "$EXPIRY_DEFAULT"
+        },
+        "profiles": {
+            "server": {
+                "expiry": "$EXPIRY_SERVER",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth"
+                ]
+            },
+            "client": {
+                "expiry": "$EXPIRY_CLIENT",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "client auth"
+                ]
+            }
+        }
+    }
+}
+EOF
+  docker run -d --rm --name copyctr -v "$VOLUME_NAME:/data" alpine sleep 300 || return 1
+  read _key _cert <<< $(_gen_ca)
+  [[ ! -f $_key ]] && exit 1
+  [[ ! -f $_cert ]] && exit 1
+  docker cp $_key copyctr:/data/ca-key.pem || return 1
+  docker cp $_cert copyctr:/data/ca-cert.pem || return 1
+  docker cp $_config copyctr:/data/cfssl.conf || return 1
+  rm $_key $_cert $_config
+}
+
+# run the ssl service
+_serve(){
+  docker run -d --restart=always -p ${PORT}:${PORT} --name "${CONTAINER_NAME}" -v $VOLUME_NAME:/data ${IMAGE_NAME}:${IMAGE_VERSION} serve -config /data/cfssl.conf -address=0.0.0.0 -ca file:/data/ca-cert.pem -ca-key file:/data/ca-key.pem
+}
+
+_smoke_test(){
+  sleep 5
+  docker container ls --filter name=${CONTAINER_NAME} | grep -q Up && return 0
+  echo "smoke test failed, container ${CONTAINER_NAME} is not running"
+  docker ps -a
+  docker logs cfssl
+  return 1
+}
+
+_signal_aws() {
+  [[ "x$SYNC" != "xtrue" ]] && return 0
+  _url=$1
+  [[ -x /usr/local/bin/cfn-signal ]] || return 1
+  if [[ -z "$_url" ]]; then
+    echo "_signal_aws was called without any URL" >&2
+    return 1
+  fi
+  /usr/local/bin/cfn-signal --stack "${STACK_NAME}" --region "${REGION}" --success true "$_url"
+  return 0
+}
+
+_install_docker || exit 1
+_install_plugins || exit 1
+_set_live_restore || exit 1
+_set_log_rotation "10m" "3" || exit 1
+_set_metrics_address "bridge" "9323" || exit 1
+_restart_docker || exit 1
+_create_volume || exit 1
+_serve || exit 1
+_smoke_test || exit 1
+_signal_aws "${SIGNAL_URL}"

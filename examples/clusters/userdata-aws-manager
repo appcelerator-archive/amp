@@ -17,8 +17,21 @@ DRAIN_MANAGER=${DRAIN_MANAGER:-false}
 #MIRROR_REGISTRIES=
 #DOCKER_DEVICE=/dev/sdl
 AMPAGENT_VERSION=${APP_VERSION:-latest}
+AMPAGENT_OPTIONS=${APP_OPTIONS}
+#INTERNAL_LB=
+#EXTERNAL_LB=
+# CA_URL=
+[[ -n "$CA_URL" ]] && FORCE_TLS=true || FORCE_TLS=false
+
 SYSTEMD_DOCKER_OVERRIDE=/etc/systemd/system/docker.service.d/docker.conf
 SYSV_DOCKER_DEFAULT=/etc/default/docker
+ENGINE_API_HTTP_PORT=2375
+ENGINE_API_TLS_PORT=2376
+[[ -n "$CA_URL" ]] && ENGINE_API_PORT=$ENGINE_API_TLS_PORT || ENGINE_API_PORT=$ENGINE_API_HTTP_PORT
+SERVER_CERT_DIR=/etc/docker/tls/server
+DOCKER_CERT_PATH=/etc/docker/tls/client
+CFSSL_IMAGE=appcelerator/cfssl
+CFSSL_VERSION=dev-20171208
 
 _init_system(){
   systemctl --version >/dev/null 2>&1 && echo systemd && return
@@ -62,10 +75,11 @@ _install_plugins(){
   local options
   for plugin in $PLUGINS; do
     options="${plugin#*#}"
-    [[ "x$options" = "x$plugin" ]] && options="" || options="${options//#/ }"
+    [[ "x$options" = "x$plugin" ]] && options="" || options="${options//\#/ }"
     plugin="${plugin%%#*}"
     alias=${plugin#store/}
     alias=${alias%:*}
+    docker plugin ls | grep -q "$plugin" && continue
     docker plugin install "$plugin" $options --alias "$alias" --grant-all-permissions # || return 1
   done
   return 0
@@ -80,8 +94,105 @@ _configure_system_prune(){
   (crontab -l 2>/dev/null; echo "$_cron_spec $_cmd") | crontab -
 }
 
+# get the CA cert and a new certificate for this node
+_gen_cert() {
+  [[ -z "$CA_URL" ]] && return 0
+  local _csr=certs/keyrequest.json
+  mkdir -p certs
+  mkdir -p $SERVER_CERT_DIR
+  if [[ ! -f $SERVER_CERT_DIR/ca.crt ]]; then
+    docker run --rm ${CFSSL_IMAGE}:${CFSSL_VERSION} info -remote=$CA_URL | jq -r .certificate > $SERVER_CERT_DIR/ca.crt
+  fi
+  if [[ ! -f $SERVER_CERT_DIR/server.key ]]; then
+    # prepare a csr for the server certificate
+    cat > $_csr << EOF
+{
+    "CN": "$(hostname)",
+    "hosts": [
+        "${INTERNAL_LB}",
+        "${EXTERNAL_LB}",
+        "$(hostname)",
+        "$(_get_node_ip)",
+        "localhost"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "Santa Clara",
+            "O": "Axway",
+            "OU": "AMP",
+            "ST": "California"
+        }
+    ]
+}
+EOF
+    docker run --rm -v $PWD/certs:/csr ${CFSSL_IMAGE}:${CFSSL_VERSION} gencert -remote=$CA_URL -profile server /csr/keyrequest.json > response.json || return 1
+    jq -r .cert < response.json > $SERVER_CERT_DIR/server.cert
+    jq -r .key < response.json > $SERVER_CERT_DIR/server.key
+    rm $_csr
+  fi
+  mkdir -p $DOCKER_CERT_PATH
+  if [[ ! -f $DOCKER_CERT_PATH/ca.crt ]]; then
+    cp -p $SERVER_CERT_DIR/ca.crt $DOCKER_CERT_PATH/ca.pem
+  fi
+  if [[ ! -f $DOCKER_CERT_PATH/key.pem ]]; then
+    # prepare a csr for the docker client certificate on this node
+    cat > $_csr << EOF
+{
+    "CN": "docker-client-$(hostname)",
+    "hosts": [
+        "$(hostname)"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "Santa Clara",
+            "O": "Axway",
+            "OU": "AMP",
+            "ST": "California"
+        }
+    ]
+}
+EOF
+    docker run --rm -v $PWD/certs:/csr ${CFSSL_IMAGE}:${CFSSL_VERSION} gencert -remote=$CA_URL -profile client /csr/keyrequest.json > response.json || return 1
+    jq -r .cert < response.json > $DOCKER_CERT_PATH/cert.pem
+    jq -r .key < response.json > $DOCKER_CERT_PATH/key.pem
+    rm $_csr
+  fi
+  # one last check on the content of the keys and certs
+  for f in $SERVER_CERT_DIR/ca.crt $SERVER_CERT_DIR/server.cert $SERVER_CERT_DIR/server.key $DOCKER_CERT_PATH/cert.pem $DOCKER_CERT_PATH/key.pem; do
+    echo "Checking integrity of $f"
+    grep -q -- '-----BEGIN' "$f" || return 1
+  done
+}
+
+# prepare the docker client for TLS connections
+_secure_client() {
+  [[ -z "$CA_URL" ]] && return 0
+  export DOCKER_CERT_PATH
+  export DOCKER_TLS_VERIFY=1
+}
+
 # expose the Docker remote api
 _expose_remote_api() {
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    echo "{}" > /etc/docker/daemon.json
+  fi
+  if [[ "x$FORCE_TLS" != x@(false|no) ]]; then
+    _tmp=$(mktemp)
+    echo "enabling TLS" >&2
+    cat /etc/docker/daemon.json | jq ".\"tls\" = true | .\"tlscacert\" = \"$SERVER_CERT_DIR/ca.crt\" | .\"tlscert\" = \"$SERVER_CERT_DIR/server.cert\" | .\"tlskey\" = \"$SERVER_CERT_DIR/server.key\" | .\"tlsverify\" = true" > "$_tmp" || return 1
+    mv "$_tmp" /etc/docker/daemon.json
+  fi
+  # host option can't be set in the daemon.json file, it would conflict with what is set in the service definition
   case $(_init_system) in
   systemd)
     mkdir -p "$(dirname $SYSTEMD_DOCKER_OVERRIDE)"
@@ -90,13 +201,13 @@ _expose_remote_api() {
     cat > "$SYSTEMD_DOCKER_OVERRIDE" <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:2375 -H unix:///var/run/docker.sock
+ExecStart=/usr/bin/dockerd -H fd:// -H 0.0.0.0:${ENGINE_API_PORT} -H unix://
 EOF
     systemctl daemon-reload
   ;;
   sysv)
     cat >> "$SYSV_DOCKER_DEFAULT" <<EOF
-DOCKER_OPTS='-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock'
+DOCKER_OPTS='-H tcp://0.0.0.0:${ENGINE_API_PORT} -H unix://'
 EOF
   ;;
   *)
@@ -153,11 +264,16 @@ _stop_docker(){
 _mount_docker_volume(){
   local _mount_point="/var/lib/docker"
   local _device
+  local _mapped_device
   local _fstype=xfs
   [[ -z "$1" ]] && return 0
-  _device=$(echo $1 | sed 's/\/sd/\/xvd/')
-  mkfs.$_fstype $_device || return 1
-  echo "$_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
+  _mapped_device=$(echo $1 | sed 's/\/sd/\/xvd/')
+  if [[ ! -f $_mapped_device ]]; then
+    # checking for ena devices
+    for _d in $(ls /dev/nvme*n1); do sudo nvme id-ctrl -v $_d | grep -q '"' && _mapped_device=$_d ; done 
+  fi
+  mkfs.$_fstype $_mapped_device || return 1
+  echo "$_mapped_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
   rm -rf "$_mount_point"
   mkdir -p "$_mount_point"
   mount "$_mount_point"
@@ -278,7 +394,7 @@ _elect_leader(){
     for _node in $_ips; do
       sleep 1
       [[ "x$_node" = "x$_local_node" ]] && continue
-      _docker_version=$(docker -H "$_node:2375" version 2>/dev/null)
+      _docker_version=$(docker -H "$_node:$ENGINE_API_PORT" version 2>/dev/null)
       _not_ready=$((_not_ready+$?))
       [[ -z "$_docker_version" ]] && ((_not_ready++))
     done
@@ -287,7 +403,7 @@ _elect_leader(){
   echo "all manager nodes have an available Docker engine API ($SECONDS s)" >&2
   # look for an existing leader
   for _node in $_ips; do
-    _swarm_status=$(docker -H "$_node:2375" node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)
+    _swarm_status=$(docker -H "$_node:$ENGINE_API_PORT" node inspect self --format "{{ .ManagerStatus.Leader }}" 2>/dev/null)
     if [[ "x$_swarm_status" = "xtrue" ]]; then
       # we found a leader
       echo "found an established leader manager: $_node" >&2
@@ -316,7 +432,7 @@ _get_manager_join_token(){
   echo "retrieving the swarm manager token (will timeout after $_timeout s)" >&2
   SECONDS=0
   while [[ $SECONDS -lt $_timeout ]]; do
-    _token=$(docker -H "$_manager:2375" swarm join-token -q manager)
+    _token=$(docker -H "$_manager:$ENGINE_API_PORT" swarm join-token -q manager)
     if [[ $? -eq 0 && -n "$_token" ]]; then
       echo "manager token obtained ($SECONDS s)" >&2
       echo $_token
@@ -339,16 +455,16 @@ _create_networks(){
 _swarm_cleanup(){
   local _manager=$1
   echo "removing dead nodes from the Swarm" >&2
-	# possible node statuses: https://github.com/moby/moby/blob/master/api/types/swarm/node.go#L106-L115
-  _down_nodes=$(docker -H "$_manager:2375" node ls --filter "role=manager" --format "{{.Hostname}} {{.Status}}"| grep -i down$ | cut -d' ' -f1)
-	# should we also check if corresponding instance is not running/pending in AWS ?
+  # possible node statuses: https://github.com/moby/moby/blob/master/api/types/swarm/node.go#L106-L115
+  _down_nodes=$(docker -H "$_manager:$ENGINE_API_PORT" node ls --filter "role=manager" --format "{{.Hostname}} {{.Status}}"| grep -i down$ | cut -d' ' -f1)
+  # should we also check if corresponding instance is not running/pending in AWS ?
   # like resolve hostname to IP and lookup instance state
   # but assuming if node is down then it is not temporary state and we do not need extra checks
-	for _node in $_down_nodes; do
-	  echo "removing $_node from the Swarm" >&2
-		docker -H "$_manager:2375" node demote $_node
-		docker -H "$_manager:2375" node rm $_node
-	done 
+  for _node in $_down_nodes; do
+    echo "removing $_node from the Swarm" >&2
+    docker -H "$_manager:$ENGINE_API_PORT" node demote $_node
+    docker -H "$_manager:$ENGINE_API_PORT" node rm $_node
+  done 
 }
 
 _swarm_join(){
@@ -419,7 +535,7 @@ _signal_aws() {
 # wait for all nodes to be up and running (and labeled)
 _wait_for_full_swarm() {
   local _timeout=360
-  local _timeout_label=60
+  local _timeout_label=90
   local _label
   local _label_prefix="amp.type."
   local _labels="api route metrics mq kv search core user"
@@ -469,7 +585,13 @@ _wait_for_full_swarm() {
 }
 
 _setup() {
-  docker run --rm -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock appcelerator/ampagent:${AMPAGENT_VERSION}
+  local _tls_opts
+  # AMP_HOST points to the manager load balancer, and can be used as a DOCKER_HOST env var in the stack files
+  [[ -n "$CA_URL" ]] && _tls_opts="-e AMP_HOST=tcp://${INTERNAL_LB}:${ENGINE_API_PORT} -e AMP_CERT_PATH=$DOCKER_CERT_PATH -e AMP_TLS_VERIFY=1 -v $DOCKER_CERT_PATH:/root/.docker"
+  # extra arguments can be passed to the cloudformation stack parameter ApplicationOptions
+  docker run --rm $_tls_opts \
+    -v /var/run/docker:/var/run/docker -v /var/run/docker.sock:/var/run/docker.sock \
+    appcelerator/ampagent:${AMPAGENT_VERSION} ${AMPAGENT_OPTIONS}
 }
 
 _sanity_check || exit 1
@@ -480,6 +602,8 @@ _system_prerequisites || exit 1
 nodeip=$(_get_node_ip)
 _install_docker || exit 1
 _install_plugins || exit 1
+_gen_cert || exit 1
+_secure_client || exit 1
 _expose_remote_api || exit 1
 _set_mirror_registries "$MIRROR_REGISTRIES" || exit 1
 _set_log_rotation "10m" "3" || exit 1

@@ -90,7 +90,7 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	if err != nil {
 		return nil, err
 	}
-	docker := docker.NewClient(config.DockerURL, config.DockerVersion)
+	docker := docker.NewEnvClient()
 	if err := docker.Connect(); err != nil {
 		return nil, err
 	}

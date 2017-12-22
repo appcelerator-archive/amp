@@ -11,6 +11,12 @@
     object: "scripts/userdata-aws-worker"
     src: userdata-aws-worker
     mode: put
+- name: Upload PKI userdata
+  aws_s3:
+    bucket: "{{ s3_bucket }}"
+    object: "scripts/userdata-aws-ca"
+    src: userdata-aws-ca
+    mode: put
 - name: Upload registry userdata
   aws_s3:
     bucket: "{{ s3_bucket }}"

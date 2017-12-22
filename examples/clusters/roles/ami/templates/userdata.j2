@@ -17,6 +17,8 @@ packages:
   - python-setuptools
 # brctl, to inspect connected containers to a bridge interface
   - bridge-utils
+# nvme, to inspect bloc devices when ENA is enabled (m5 and c5 instance types)
+  - nvme-cli
 write_files:
   - path: "/etc/default/grub.d/50-cloudimg-settings.cfg"
     encoding: "base64"
@@ -34,11 +36,13 @@ runcmd:
   - export CHANNEL="{{docker_channel}}" ; wget -qO- "{{docker_url}}" | sh || _ko
   - if [ "x$_release" = "xUbuntu" ]; then usermod -G docker ubuntu 2>/dev/null ; fi
   - if [ "x$_release" = "xDebian" ]; then usermod -G docker admin  2>/dev/null ; fi
+  - docker pull appcelerator/cfssl:latest
   - echo "vm.max_map_count = 262144" > "/etc/sysctl.d/99-amp.conf" # prerequisite for elasticsearch
   - aws s3 --region="{{ ec2_region }}" cp "s3://{{ s3_bucket }}/scripts/userdata-aws-manager" /usr/local/bin/userdata-aws-manager || _ko
   - aws s3 --region="{{ ec2_region }}" cp "s3://{{ s3_bucket }}/scripts/userdata-aws-worker" /usr/local/bin/userdata-aws-worker || _ko
+  - aws s3 --region="{{ ec2_region }}" cp "s3://{{ s3_bucket }}/scripts/userdata-aws-ca" /usr/local/bin/userdata-aws-ca || _ko
   - aws s3 --region="{{ ec2_region }}" cp "s3://{{ s3_bucket }}/scripts/userdata-aws-registry" /usr/local/bin/userdata-aws-registry || _ko
-  - chmod u+x /usr/local/bin/userdata-aws-worker /usr/local/bin/userdata-aws-manager /usr/local/bin/userdata-aws-registry
+  - chmod u+x /usr/local/bin/userdata-aws-worker /usr/local/bin/userdata-aws-manager /usr/local/bin/userdata-aws-registry /usr/local/bin/userdata-aws-ca
   - echo "" > ~ubuntu/.ssh/authorized_keys
   - shred -u ~/.*history
   - _ok
