@@ -264,11 +264,16 @@ _stop_docker(){
 _mount_docker_volume(){
   local _mount_point="/var/lib/docker"
   local _device
+  local _mapped_device
   local _fstype=xfs
   [[ -z "$1" ]] && return 0
-  _device=$(echo $1 | sed 's/\/sd/\/xvd/')
-  mkfs.$_fstype $_device || return 1
-  echo "$_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
+  _mapped_device=$(echo $1 | sed 's/\/sd/\/xvd/')
+  if [[ ! -f $_mapped_device ]]; then
+    # checking for ena devices
+    for _d in $(ls /dev/nvme*n1); do sudo nvme id-ctrl -v $_d | grep -q '"' && _mapped_device=$_d ; done 
+  fi
+  mkfs.$_fstype $_mapped_device || return 1
+  echo "$_mapped_device    $_mount_point   $_fstype    defaults    0    2" >> /etc/fstab
   rm -rf "$_mount_point"
   mkdir -p "$_mount_point"
   mount "$_mount_point"
