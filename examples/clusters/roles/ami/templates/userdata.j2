@@ -17,6 +17,8 @@ packages:
   - python-setuptools
 # brctl, to inspect connected containers to a bridge interface
   - bridge-utils
+# nvme, to inspect bloc devices when ENA is enabled (m5 and c5 instance types)
+  - nvme-cli
 write_files:
   - path: "/etc/default/grub.d/50-cloudimg-settings.cfg"
     encoding: "base64"
