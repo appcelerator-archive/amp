@@ -14,6 +14,9 @@ var (
 
 	// Build is set with a linker flag (see Makefile)
 	Build string
+
+	// Default pattern for the overlay network creation
+	DefaultSubnetPattern = "10.%d.0.0/16"
 )
 
 func main() {
@@ -38,6 +41,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoLogs, "no-logs", false, "Don't deploy logs stack")
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
+	rootCmd.PersistentFlags().StringVar(&cmd.InstallOpts.SubnetPattern, "subnet-pattern", DefaultSubnetPattern, "Subnet pattern for overlay networks, should contain a single %d")
 
 	// Environment variables
 	if os.Getenv("TAG") == "" { // If TAG is undefined, use the current project version
