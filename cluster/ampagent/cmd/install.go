@@ -33,9 +33,10 @@ type StackVariables struct {
 }
 
 type InstallOptions struct {
-	NoLogs    bool
-	NoMetrics bool
-	NoProxy   bool
+	NoLogs        bool
+	NoMetrics     bool
+	NoProxy       bool
+	SubnetPattern string
 }
 
 var InstallOpts = &InstallOptions{}
@@ -321,7 +322,7 @@ func createInitialSecrets() error {
 var ampnetworks = []string{"public", "monit", "core"}
 
 func createInitialNetworks() error {
-	for _, network := range ampnetworks {
+	for i, network := range ampnetworks {
 		// Check if network already exists
 		exists, err := Docker.NetworkExists(network)
 		if err != nil {
@@ -331,7 +332,8 @@ func createInitialNetworks() error {
 			log.Println("Skipping already existing network:", network)
 			continue
 		}
-		if _, err := Docker.CreateNetwork(network, true, true); err != nil {
+		subnets := []string{fmt.Sprintf(InstallOpts.SubnetPattern, i+1)}
+		if _, err := Docker.CreateNetwork(network, true, true, subnets); err != nil {
 			return err
 		}
 		log.Println("Successfully created network:", network)

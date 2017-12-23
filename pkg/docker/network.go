@@ -2,6 +2,7 @@ package docker
 
 import (
 	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/network"
 	"golang.org/x/net/context"
 )
 
@@ -35,10 +36,20 @@ func (d *Docker) NetworkID(name string) (string, error) {
 	return "", nil
 }
 
-func (d *Docker) CreateNetwork(name string, overlay bool, attachable bool) (string, error) {
+func (d *Docker) CreateNetwork(name string, overlay bool, attachable bool, subnets []string) (string, error) {
+	ipamCfg := []network.IPAMConfig{}
+	for _, s := range subnets {
+		ipamCfg = append(ipamCfg, network.IPAMConfig{Subnet: s, AuxAddress: map[string]string{}})
+	}
 	spec := types.NetworkCreate{
 		CheckDuplicate: true,
 		Attachable:     attachable,
+	}
+	if ipamCfg != nil {
+		spec.IPAM = &network.IPAM{
+			Driver: "default",
+			Config: ipamCfg,
+		}
 	}
 	if overlay {
 		spec.Driver = "overlay"
