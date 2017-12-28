@@ -363,7 +363,7 @@ func NewLogProducer(h *Helper) *LogProducer {
 	go func(lp *LogProducer) {
 		for {
 			time.Sleep(50 * time.Millisecond)
-			if lp.asyncProduction > 0 {
+			if atomic.LoadInt32(&lp.asyncProduction) > 0 {
 				if err := lp.produce(logs.NumberOfEntries); err != nil {
 					log.Println("error producing async messages", err)
 				}
