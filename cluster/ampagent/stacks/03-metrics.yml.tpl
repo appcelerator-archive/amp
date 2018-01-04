@@ -207,7 +207,7 @@ services:
              "-web.external-url=http://localhost:9093" ]
 
   grafana:
-    image: appcelerator/grafana-amp:1.2.11
+    image: appcelerator/grafana-amp:1.2.12
     networks:
       - core
       - public
