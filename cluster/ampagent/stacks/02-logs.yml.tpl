@@ -56,7 +56,7 @@ services:
         - node.labels.amp.type.search == true
 
   nats:
-    image: appcelerator/amp-nats-streaming:v0.6.0
+    image: appcelerator/amp-nats-streaming:v0.7.0
     networks:
       - core
     labels:
