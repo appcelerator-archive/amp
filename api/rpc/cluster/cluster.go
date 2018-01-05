@@ -223,3 +223,36 @@ func (s *Server) ClusterNodeList(ctx context.Context, in *NodeListRequest) (*Nod
 	}
 	return ret, nil
 }
+
+// NodeCleanup removes nodes in the down state
+func (s *Server) ClusterNodeCleanup(ctx context.Context, in *NodeCleanupRequest) (*NodeListReply, error) {
+	log.Infoln("[cluster] NodeCleanup")
+
+	list, err := s.Docker.GetClient().NodeList(ctx, types.NodeListOptions{})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	ret := &NodeListReply{}
+	for _, node := range list {
+		if node.Status.State == swarm.NodeStateDown {
+			ret.Nodes = append(ret.Nodes, &NodeReply{
+				Id:       node.ID,
+				Hostname: node.Description.Hostname,
+				Role:     string(node.Spec.Role),
+			})
+			// if the node is a manager, first demote it
+			if node.Spec.Role == swarm.NodeRoleManager {
+				log.Infoln("Demoting node", node.ID, node.Description.Hostname)
+				node.Spec.Role = swarm.NodeRoleWorker
+				if err = s.Docker.GetClient().NodeUpdate(ctx, node.ID, node.Version, node.Spec); err != nil {
+					return nil, err
+				}
+			}
+			if err = s.Docker.GetClient().NodeRemove(ctx, node.ID, types.NodeRemoveOptions{Force: in.Force}); err != nil {
+				log.Infoln("Removing node", node.ID, node.Description.Hostname)
+				return nil, err
+			}
+		}
+	}
+	return ret, nil
+}
