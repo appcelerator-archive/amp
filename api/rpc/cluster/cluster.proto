@@ -21,6 +21,11 @@ service Cluster {
       get: "/v1/clusters/nodes"
     };
   };
+  rpc ClusterNodeCleanup (NodeCleanupRequest) returns (NodeListReply) {
+    option (google.api.http) = {
+      get: "/v1/clusters/cleanup"
+    };
+  };
   rpc ClusterStatus (StatusRequest) returns (StatusReply) {
     option (google.api.http) = {
       get: "/v1/clusters/status"
@@ -123,4 +128,8 @@ message NodeReply {
 message EnginePlugin {
   string type = 1;
   string name = 2;
+}
+
+message NodeCleanupRequest {
+  bool force = 1;
 }
