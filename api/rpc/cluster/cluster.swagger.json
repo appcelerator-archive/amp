@@ -55,6 +55,31 @@
         ]
       }
     },
+    "/v1/clusters/cleanup": {
+      "get": {
+        "operationId": "ClusterNodeCleanup",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/clusterNodeListReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
+          }
+        ],
+        "tags": [
+          "Cluster"
+        ]
+      }
+    },
     "/v1/clusters/nodes": {
       "get": {
         "operationId": "ClusterNodeList",
