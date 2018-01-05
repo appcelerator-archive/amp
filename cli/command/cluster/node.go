@@ -15,5 +15,6 @@ func NewNodeCommand(c cli.Interface) *cobra.Command {
 	}
 	cmd.AddCommand(NewNodeListCommand(c))
 	cmd.AddCommand(NewNodeInspectCommand(c))
+	cmd.AddCommand(NewNodeCleanupCommand(c))
 	return cmd
 }
