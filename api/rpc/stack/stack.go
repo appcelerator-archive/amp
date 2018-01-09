@@ -57,7 +57,7 @@ func (s *Server) StackDeploy(ctx context.Context, in *DeployRequest) (*DeployRep
 	} else {
 		// if it does, make sure we have the right to update it
 		if !s.Accounts.IsAuthorized(ctx, stack.Owner, accounts.UpdateAction, accounts.StackRN, stack.Id) {
-			return nil, stacks.AlreadyExists
+			return nil, accounts.NotAuthorized
 		}
 	}
 

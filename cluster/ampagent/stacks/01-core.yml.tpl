@@ -75,9 +75,8 @@ services:
     volumes:
 {{- if .EnableTLS }}
       - ${AMP_CERT_PATH:-/root/.docker}:/root/.docker:ro
-{{- else }}
-      - "/var/run/docker.sock:/var/run/docker.sock"
 {{- end }}
+      - "/var/run/docker.sock:/var/run/docker.sock"
     labels:
       io.amp.role: "infrastructure"
       amp.service.stabilize.delay: "4s"
