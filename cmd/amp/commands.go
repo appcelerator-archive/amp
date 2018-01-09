@@ -10,6 +10,7 @@ import (
 	"github.com/appcelerator/amp/cli/command/cluster"
 	"github.com/appcelerator/amp/cli/command/completion"
 	"github.com/appcelerator/amp/cli/command/config"
+	"github.com/appcelerator/amp/cli/command/image"
 	"github.com/appcelerator/amp/cli/command/login"
 	"github.com/appcelerator/amp/cli/command/logout"
 	"github.com/appcelerator/amp/cli/command/logs"
@@ -98,6 +99,9 @@ func addCommands(cmd *cobra.Command, c cli.Interface) {
 
 		// config
 		config.NewConfigCommand(c),
+
+		// image
+		image.NewImageCommand(c),
 
 		// login
 		login.NewLoginCommand(c),
