@@ -1,0 +1,67 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "github.com/appcelerator/amp/api/rpc/image/image.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "imageImageEntry": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "digest": {
+          "type": "string"
+        }
+      }
+    },
+    "imageListReply": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/imageRepositoryEntry"
+          }
+        }
+      }
+    },
+    "imagePushReply": {
+      "type": "object",
+      "properties": {
+        "digest": {
+          "type": "string"
+        }
+      }
+    },
+    "imageRemoveReply": {
+      "type": "object"
+    },
+    "imageRepositoryEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/imageImageEntry"
+          }
+        }
+      }
+    }
+  }
+}

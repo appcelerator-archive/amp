@@ -9,6 +9,7 @@ import (
 
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	cf "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -74,6 +75,32 @@ func Region() (string, error) {
 	return az[:len(az)-1], nil
 }
 
+func cfStackName(sess awsclient.ConfigProvider, awsconfig *awssdk.Config, instanceId string) (string, error) {
+	ec2svc := ec2.New(sess, awsconfig)
+	return getTag(ec2svc, instanceId, AwsStackNameTag)
+}
+
+func stackOutputs(ctx context.Context, sess awsclient.ConfigProvider, awsconfig *awssdk.Config, stackName string) ([]*cf.Output, error) {
+	page := 1
+	// instance of cloudformation services
+	cfsvc := cf.New(sess, awsconfig)
+	input := &cf.DescribeStacksInput{
+		StackName: awssdk.String(stackName),
+		NextToken: awssdk.String(strconv.Itoa(page)),
+	}
+	output, err := cfsvc.DescribeStacksWithContext(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	var stack *cf.Stack
+	for _, stack = range output.Stacks {
+		if awssdk.StringValue(stack.StackName) == stackName {
+			return stack.Outputs, nil
+		}
+	}
+	return nil, errors.New("stack not found: " + stackName)
+}
+
 // StackInfo updates the receiver with cloudformation stack information
 func StackInfo(ctx context.Context, outputs *map[string]string) error {
 	region, err := Region()
@@ -88,49 +115,64 @@ func StackInfo(ctx context.Context, outputs *map[string]string) error {
 	// create an aws api session
 	awsconfig := awssdk.NewConfig().WithRegion(region).WithLogLevel(awssdk.LogOff)
 	sess := session.Must(session.NewSession())
-	// instance of cloudformation and ec2 services
-	cfsvc := cf.New(sess, awsconfig)
-	ec2svc := ec2.New(sess, awsconfig)
 	// get the stack name
-	stackName, err := getTag(ec2svc, instanceId, AwsStackNameTag)
+	stackName, err := cfStackName(sess, awsconfig, instanceId)
 	if err != nil {
 		return err
 	}
-	page := 1
-	input := &cf.DescribeStacksInput{
-		StackName: awssdk.String(stackName),
-		NextToken: awssdk.String(strconv.Itoa(page)),
-	}
-	output, err := cfsvc.DescribeStacksWithContext(ctx, input)
+	sOutputs, err := stackOutputs(ctx, sess, awsconfig, stackName)
 	if err != nil {
 		return err
 	}
-
-	var stack *cf.Stack
-	for _, stack = range output.Stacks {
-		if awssdk.StringValue(stack.StackName) == stackName {
-			break
-		}
-		stack = nil
-	}
-
-	if stack == nil {
-		return errors.New("stack not found: " + stackName)
-	}
-
 	*outputs = map[string]string{
 		"StackName": stackName,
 		"Provider":  "AWS", // can't import constants from package cloud
 		"Region":    region,
 	}
-	for _, o := range stack.Outputs {
+	for _, o := range sOutputs {
 		switch awssdk.StringValue(o.OutputKey) {
 		case "DNSTarget", "NFSEndpoint", "InternalPKITarget", "InternalDockerHost":
 			(*outputs)[awssdk.StringValue(o.OutputKey)] = awssdk.StringValue(o.OutputValue)
 		}
 	}
-
 	return nil
+}
+
+// Registry return the internal registry endpoint
+func InternalRegistry(ctx context.Context) (string, error) {
+	region, err := Region()
+	if err != nil {
+		return "", err
+	}
+	// get the instance id
+	instanceId, err := getMetadata(AwsInstanceIdURL)
+	if err != nil {
+		return "", err
+	}
+	// create an aws api session
+	awsconfig := awssdk.NewConfig().WithRegion(region).WithLogLevel(awssdk.LogOff)
+	sess := session.Must(session.NewSession())
+	// get the stack name
+	stackName, err := cfStackName(sess, awsconfig, instanceId)
+	if err != nil {
+		return "", err
+	}
+	sOutputs, err := stackOutputs(ctx, sess, awsconfig, stackName)
+	if err != nil {
+		return "", err
+	}
+	for _, o := range sOutputs {
+		switch awssdk.StringValue(o.OutputKey) {
+		case "InternalRegistryTarget":
+			v := awssdk.StringValue(o.OutputValue)
+			if v != "disabled" {
+				return v, nil
+			} else {
+				return v, errors.New("internal registry is disabled in this cluster")
+			}
+		}
+	}
+	return "", errors.New("unable to find the internal registry target")
 }
 
 // S3CreateBucket creates an s3 bucket
