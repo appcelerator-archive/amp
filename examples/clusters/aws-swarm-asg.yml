@@ -570,13 +570,13 @@ Resources:
         ToPort: '4789'
       # node exporter
       - SourceSecurityGroupId:
-          !Ref MetricsSecurityGroup
+          !Ref CoreSecurityGroup
         IpProtocol: tcp
         FromPort: '9100'
         ToPort: '9100'
       # docker metrics
       - SourceSecurityGroupId:
-          !Ref MetricsSecurityGroup
+          !Ref CoreSecurityGroup
         IpProtocol: tcp
         FromPort: '9323'
         ToPort: '9323'
@@ -596,6 +596,14 @@ Resources:
         IpProtocol: tcp
         FromPort: '2376'
         ToPort: '2376'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: '9090'
+        ToPort: '9090'
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: !Ref MonitoringPort
+        ToPort: !Ref MonitoringPort
       - CidrIp: 0.0.0.0/0
         IpProtocol: tcp
         FromPort: '50101'
@@ -643,18 +651,8 @@ Resources:
         IpProtocol: udp
         FromPort: '4789'
         ToPort: '4789'
-      # node exporter
-      - SourceSecurityGroupId:
-          !Ref MetricsSecurityGroup
-        IpProtocol: tcp
-        FromPort: '9100'
-        ToPort: '9100'
-      # docker metrics
-      - SourceSecurityGroupId:
-          !Ref MetricsSecurityGroup
-        IpProtocol: tcp
-        FromPort: '9323'
-        ToPort: '9323'
+      # node exporter: self ingress
+      # docker metrics: self ingress
       - CidrIp: 0.0.0.0/0
         IpProtocol: tcp
         FromPort: '22'
@@ -716,13 +714,13 @@ Resources:
         ToPort: '4789'
       # node exporter
       - SourceSecurityGroupId:
-          !Ref MetricsSecurityGroup
+          !Ref CoreSecurityGroup
         IpProtocol: tcp
         FromPort: '9100'
         ToPort: '9100'
       # docker metrics
       - SourceSecurityGroupId:
-          !Ref MetricsSecurityGroup
+          !Ref CoreSecurityGroup
         IpProtocol: tcp
         FromPort: '9323'
         ToPort: '9323'
@@ -752,31 +750,6 @@ Resources:
       IpProtocol: -1
       SourceSecurityGroupId:
         Ref: UserSecurityGroup
-
-  MetricsSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    DependsOn: InternetGateway
-    Properties:
-      GroupDescription: Monitoring services security group
-      SecurityGroupIngress:
-      - CidrIp: 0.0.0.0/0
-        IpProtocol: tcp
-        FromPort: '9090'
-        ToPort: '9090'
-      - CidrIp: 0.0.0.0/0
-        IpProtocol: tcp
-        FromPort: !Ref MonitoringPort
-        ToPort: !Ref MonitoringPort
-      VpcId:
-        Ref: Vpc
-  MetricsSelfIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId:
-        Ref: MetricsSecurityGroup
-      IpProtocol: -1
-      SourceSecurityGroupId:
-        Ref: MetricsSecurityGroup
 
   CAExtSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -1432,7 +1405,6 @@ Resources:
       KeyName: !Ref KeyName
       SecurityGroups:
         - Ref: ManagerSecurityGroup
-        - Ref: MetricsSecurityGroup
       BlockDeviceMappings:
         - DeviceName: /dev/sdl
           Ebs:
@@ -1492,7 +1464,6 @@ Resources:
         - !Ref PublicSubnet3
       SecurityGroups:
         - Ref: ManagerSecurityGroup
-        - Ref: MetricsSecurityGroup
       CrossZone: true
       Listeners:
       - LoadBalancerPort: '22'
