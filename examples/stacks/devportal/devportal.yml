@@ -1,0 +1,93 @@
+version: "3.3"
+
+networks:
+  public:
+    external: true
+  monit:
+    external: true
+  backend:
+    driver: overlay
+  db:
+    driver: overlay
+
+secrets:
+  devportal-mysql-root:
+    external: true
+configs:
+  devportal-mysql-init-sql:
+    external: true
+
+volumes:
+  mysql-data:
+  redis-data:
+  devportal-composer-cache:
+
+services:
+  mysql:
+    image: mysql:5.7
+    networks:
+      backend:
+      db:
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: "/run/secrets/devportal-mysql-root"
+    secrets:
+      - devportal-mysql-root
+    configs:
+      - source: devportal-mysql-init-sql
+        target: /docker-entrypoint-initdb.d/init.sql
+        mode: 0644
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+
+  adminer:
+    image: adminer:4.3.1-standalone
+    networks:
+      public:
+      db:
+    environment:
+      SERVICE_PORTS: 8080
+      VIRTUAL_HOST: "adminer.devportal.*,https://adminer.devportal.*"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
+
+  redis:
+    image: platform-ui/redis:0.0.1
+    networks:
+      - db
+    volumes:
+      - redis-data:/data
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-changeme}"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.amp.type.user == true
+
+  devportal:
+    image: devportal/devportal-image:77
+    networks:
+      - backend
+      - public
+    volumes:
+      - devportal-composer-cache:/root/.composer/cache
+    environment:
+      SERVICE_PORTS: 80
+      VIRTUAL_HOST: "frontend.devportal.*,https://frontend.devportal.*"
+      JOOMLA_DB_HOST: "mysql"
+      JOOMLA_DB_NAME: "portal"
+      JOOMLA_DB_USER: "developerportal"
+      JOOMLA_DB_PASSWORD: "${DB_PASSWORD:-changeme}"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.amp.type.user == true
