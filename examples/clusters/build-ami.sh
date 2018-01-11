@@ -7,7 +7,7 @@ REGIONS="us-east-1 us-east-2 us-west-2 eu-west-1 ap-southeast-2"
 OWNER=654814900965
 IMAGE_NAME=ubuntu-xenial-docker
 
-if [[ ! -f $HOME/.aws/credentials ]]; then
+if [[ ! -f $HOME/.aws/credentials && ! -f $HOME/.aws/config ]]; then
   echo "Please configure your aws credentials first"
   exit 1
 fi
