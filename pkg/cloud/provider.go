@@ -26,24 +26,26 @@ func CloudProvider() (Provider, error) {
 	dataLen := 3
 	uuidFile, err := os.Open("/sys/hypervisor/uuid")
 	if err != nil {
+		uuidFile, err = os.Open("/sys/devices/virtual/dmi/id/product_uuid")
+	}
+	if err != nil {
 		// file does not exist, so we'll consider it's not a cloud deployment
 		return ProviderLocal, nil
 	}
 	data := make([]byte, dataLen)
 	count, err := uuidFile.Read(data)
 	if err != nil {
-		log.Infoln("Unable to establish provider from uuid file:", err)
-		return ProviderLocal, nil
+		return ProviderUnknown, fmt.Errorf("Unable to establish provider from uuid file: %s", err)
 	}
 	if count != dataLen {
 		log.Infoln("Unable to establish provider, empty uuid file")
 		return ProviderLocal, nil
 	}
 	switch string(data) {
-	case "ec2":
+	case "ec2", "EC2":
 		return ProviderAWS, nil
 	default:
-		return ProviderUnknown, fmt.Errorf("found unexpected value in uuid file: %s", string(data))
+		return ProviderLocal, nil
 	}
 }
 

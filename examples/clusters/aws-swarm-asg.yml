@@ -826,7 +826,7 @@ Resources:
       BucketName:
         Fn::Join:
         - '-'
-        - - stack
+        - - Ref: AWS::AccountId
           - Ref: AWS::StackName
           - registry
 

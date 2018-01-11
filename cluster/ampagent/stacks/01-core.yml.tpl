@@ -28,17 +28,28 @@ services:
       - etcd-data:/data
     environment:
       SERVICE_NAME: "etcd"
-      MIN_SEEDS_COUNT: 1
+      MIN_SEEDS_COUNT: {{ if eq .DeploymentMode "cluster" }}3{{ else }}1{{ end }}
     command:
       - "--advertise-client-urls"
       - "http://etcd:2379"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "30s"
+      amp.service.stabilize.delay: "10s"
+      amp.service.stabilize.timeout: "40s"
     deploy:
       mode: replicated
+{{- if eq .DeploymentMode "cluster" }}
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 30s
+      restart_policy:
+        condition: any
+        delay: 25s
+        window: 15s
+{{- else }}
       replicas: 1
+{{- end }}
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "2379"
@@ -54,9 +65,17 @@ services:
     environment:
       REGISTRATION: ${REGISTRATION:-email}
       NOTIFICATIONS: ${NOTIFICATIONS:-true}
+{{- if .EnableTLS }}
+      DOCKER_HOST: "${AMP_HOST:-unix:///var/run/docker.sock}"
+      DOCKER_TLS_VERIFY: "${AMP_TLS_VERIFY}"
+      DOCKER_CERT_PATH: "/root/.docker"
+{{- end }}
     ports:
       - "50101:50101"
     volumes:
+{{- if .EnableTLS }}
+      - ${AMP_CERT_PATH:-/root/.docker}:/root/.docker:ro
+{{- end }}
       - "/var/run/docker.sock:/var/run/docker.sock"
     labels:
       io.amp.role: "infrastructure"

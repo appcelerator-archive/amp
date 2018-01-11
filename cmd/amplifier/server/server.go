@@ -14,6 +14,7 @@ import (
 	"github.com/appcelerator/amp/api/rpc/account"
 	"github.com/appcelerator/amp/api/rpc/cluster"
 	"github.com/appcelerator/amp/api/rpc/config"
+	"github.com/appcelerator/amp/api/rpc/image"
 	"github.com/appcelerator/amp/api/rpc/logs"
 	"github.com/appcelerator/amp/api/rpc/node"
 	"github.com/appcelerator/amp/api/rpc/object_store"
@@ -46,19 +47,20 @@ type serviceInitializer func(*Amplifier, *grpc.Server)
 
 // Amplifier represents the AMP gRPC server
 type Amplifier struct {
-	config       *configuration.Configuration
-	docker       *docker.Docker
-	storage      storage.Interface
-	es           *elasticsearch.Elasticsearch
-	ns           *ns.NatsStreaming
-	mailer       *mail.Mailer
-	tokens       *auth.Tokens
-	accounts     accounts.Interface
-	stacks       stacks.Interface
-	dashboards   dashboards.Interface
-	objectStores object_stores.Interface
-	provider     cloud.Provider
-	region       string
+	config        *configuration.Configuration
+	managerDocker *docker.Docker
+	localDocker   *docker.Docker
+	storage       storage.Interface
+	es            *elasticsearch.Elasticsearch
+	ns            *ns.NatsStreaming
+	mailer        *mail.Mailer
+	tokens        *auth.Tokens
+	accounts      accounts.Interface
+	stacks        stacks.Interface
+	dashboards    dashboards.Interface
+	objectStores  object_stores.Interface
+	provider      cloud.Provider
+	region        string
 }
 
 // Service initializers register the services with the grpc server
@@ -66,6 +68,7 @@ var serviceInitializers = []serviceInitializer{
 	registerAccountServer,
 	registerConfigServer,
 	registerClusterServer,
+	registerImageServer,
 	registerLogsServer,
 	registerNodeServer,
 	registerObjectStoreServer,
@@ -90,8 +93,12 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 	if err != nil {
 		return nil, err
 	}
-	docker := docker.NewClient(config.DockerURL, config.DockerVersion)
-	if err := docker.Connect(); err != nil {
+	managerDocker := docker.NewEnvClient()
+	if err := managerDocker.Connect(); err != nil {
+		return nil, err
+	}
+	localDocker := docker.NewClient(docker.DefaultURL, docker.DefaultVersion)
+	if err := localDocker.Connect(); err != nil {
 		return nil, err
 	}
 	provider, err := cloud.CloudProvider()
@@ -107,19 +114,20 @@ func New(config *configuration.Configuration) (*Amplifier, error) {
 		log.Infoln("Region", region)
 	}
 	amp := &Amplifier{
-		config:       config,
-		storage:      etcd,
-		es:           elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
-		ns:           ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
-		docker:       docker,
-		mailer:       mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
-		tokens:       auth.New(config.JWTSecretKey),
-		accounts:     accounts,
-		stacks:       stacks.NewStore(etcd, accounts),
-		dashboards:   dashboards.NewStore(etcd, accounts),
-		objectStores: object_stores.NewStore(etcd, accounts),
-		provider:     provider,
-		region:       region,
+		config:        config,
+		storage:       etcd,
+		es:            elasticsearch.NewClient(config.ElasticsearchURL, configuration.DefaultTimeout),
+		ns:            ns.NewClient(config.NatsURL, ns.ClusterID, "amplifier-"+hostname, configuration.DefaultTimeout),
+		managerDocker: managerDocker,
+		localDocker:   localDocker,
+		mailer:        mail.NewMailer(config.EmailKey, config.EmailSender, config.Notifications),
+		tokens:        auth.New(config.JWTSecretKey),
+		accounts:      accounts,
+		stacks:        stacks.NewStore(etcd, accounts),
+		dashboards:    dashboards.NewStore(etcd, accounts),
+		objectStores:  object_stores.NewStore(etcd, accounts),
+		provider:      provider,
+		region:        region,
 	}
 	return amp, nil
 }
@@ -161,6 +169,7 @@ func (a *Amplifier) Start() error {
 		),
 		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
 		grpc.RPCDecompressor(grpc.NewGZIPDecompressor()),
+		grpc.MaxRecvMsgSize(1024*1024*1024), // 1GB max message (used for image push)
 	)
 	registerServices(a, s)
 
@@ -201,7 +210,7 @@ func registerServices(amp *Amplifier, s *grpc.Server) {
 
 func registerConfigServer(amp *Amplifier, s *grpc.Server) {
 	config.RegisterConfigServer(s, &config.Server{
-		Docker: amp.docker,
+		Docker: amp.managerDocker,
 	})
 }
 
@@ -216,6 +225,13 @@ func registerVersionServer(amp *Amplifier, s *grpc.Server) {
 			Registration:  amp.config.Registration,
 			Notifications: amp.config.Notifications,
 		},
+	})
+}
+
+func registerImageServer(amp *Amplifier, s *grpc.Server) {
+	image.RegisterImageServer(s, &image.Server{
+		Docker:   amp.localDocker,
+		Provider: amp.provider,
 	})
 }
 
@@ -246,14 +262,14 @@ func registerAccountServer(amp *Amplifier, s *grpc.Server) {
 func registerStackServer(amp *Amplifier, s *grpc.Server) {
 	stack.RegisterStackServer(s, &stack.Server{
 		Accounts: amp.accounts,
-		Docker:   amp.docker,
+		Docker:   amp.managerDocker,
 		Stacks:   amp.stacks,
 	})
 }
 
 func registerClusterServer(amp *Amplifier, s *grpc.Server) {
 	cluster.RegisterClusterServer(s, &cluster.Server{
-		Docker:   amp.docker,
+		Docker:   amp.managerDocker,
 		Provider: amp.provider,
 		Region:   amp.region,
 	})
@@ -261,21 +277,21 @@ func registerClusterServer(amp *Amplifier, s *grpc.Server) {
 
 func registerSecretServer(amp *Amplifier, s *grpc.Server) {
 	secret.RegisterSecretServer(s, &secret.Server{
-		Docker: amp.docker,
+		Docker: amp.managerDocker,
 	})
 }
 
 func registerServiceServer(amp *Amplifier, s *grpc.Server) {
 	service.RegisterServiceServer(s, &service.Server{
 		Accounts: amp.accounts,
-		Docker:   amp.docker,
+		Docker:   amp.managerDocker,
 		Stacks:   amp.stacks,
 	})
 }
 
 func registerNodeServer(amp *Amplifier, s *grpc.Server) {
 	node.RegisterNodeServer(s, &node.Server{
-		Docker: amp.docker,
+		Docker: amp.managerDocker,
 	})
 }
 

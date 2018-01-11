@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package image;
+
+service Image {
+  rpc ImagePush (PushRequest) returns (PushReply);
+  rpc ImageList (ListRequest) returns (ListReply);
+  rpc ImageRemove (RemoveRequest) returns (RemoveReply);
+}
+message PushRequest {
+  string name = 1;
+  bytes data = 2;
+}
+message PushReply {
+  string digest = 1;
+}
+message ListRequest {
+}
+message ImageEntry {
+  string tag = 1;
+  string digest = 2;
+}
+message RepositoryEntry {
+  string name = 1;
+  repeated ImageEntry entries = 2;
+}
+message ListReply {
+  repeated RepositoryEntry entries = 1;
+}
+message RemoveRequest {
+  string name = 1;
+  string digest = 2;
+}
+message RemoveReply {
+}
