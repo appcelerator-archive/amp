@@ -598,10 +598,6 @@ Resources:
         ToPort: '2376'
       - CidrIp: 0.0.0.0/0
         IpProtocol: tcp
-        FromPort: '9090'
-        ToPort: '9090'
-      - CidrIp: 0.0.0.0/0
-        IpProtocol: tcp
         FromPort: !Ref MonitoringPort
         ToPort: !Ref MonitoringPort
       - CidrIp: 0.0.0.0/0
@@ -948,8 +944,8 @@ Resources:
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: 3
-      HealthCheckGracePeriod: 200
-      HealthCheckType: ELB
+      HealthCheckGracePeriod: 120
+      HealthCheckType: EC2
       LaunchConfigurationName: !Ref RegistryAsgLaunchConfig
       MaxSize: 4
       MinSize: 0
@@ -1051,7 +1047,7 @@ Resources:
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: 1
-      HealthCheckGracePeriod: 300
+      HealthCheckGracePeriod: 120
       HealthCheckType: ELB
       LoadBalancerNames:
       - !Ref CAInternalELB
@@ -1165,6 +1161,7 @@ Resources:
       - PublicSubnet2
       - PublicSubnet3
       - ManagerWaitCondition
+      - ManagerInternalELBListenerSwarmAPI
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -1230,7 +1227,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true CA_URL="${CADnsName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.metrics=true amp.type.api=true amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true CA_URL="${CADnsName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${CoreWaitHandle}" LABELS="amp.type.metrics=true amp.type.api=true amp.type.core=true amp.type.mq=true amp.type.kv=true amp.type.search=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalNLB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], CADnsName: !If [ EnableTLSCond, !Join ["", ["http://", !GetAtt CAInternalELB.DNSName]], "" ] }
 
   UserWaitHandle:
@@ -1251,6 +1248,7 @@ Resources:
       - PublicSubnet2
       - PublicSubnet3
       - ManagerWaitCondition
+      - ManagerInternalELBListenerSwarmAPI
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
@@ -1316,7 +1314,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-worker -o /usr/local/bin/userdata-aws-worker && chmod +x /usr/local/bin/userdata-aws-worker || true
-                - SYNC=true CA_URL="${CADnsName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalELB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
+                - SYNC=true CA_URL="${CADnsName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${UserWaitHandle}" LABELS="amp.type.user=true" CHANNEL="stable" PLUGINS="${DockerPlugins}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} DOCKER_DEVICE=/dev/sdl LEADER=${ManagerInternalNLB.DNSName} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-worker || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], CADnsName: !If [ EnableTLSCond, !Join ["", ["http://", !GetAtt CAInternalELB.DNSName]], "" ] }
 
   ApplicationWaitHandle:
@@ -1345,6 +1343,110 @@ Resources:
       Timeout: 600
       Count: !Ref ManagerSize
 
+  ManagerExtTargetGroupSSH:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 22
+      Protocol: TCP
+      HealthCheckIntervalSeconds: 10
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerExtTargetGroupHTTP:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: TCP
+      HealthCheckPort: 22
+      HealthyThresholdCount: 10
+      UnhealthyThresholdCount: 10
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerExtTargetGroupHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 443
+      Protocol: TCP
+      HealthCheckPort: 22
+      HealthyThresholdCount: 10
+      UnhealthyThresholdCount: 10
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerExtTargetGroupDockerAPI:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Condition: EnableTLSCond
+    Properties:
+      Port: "2376"
+      Protocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerIntTargetGroupDockerAPI:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Condition: EnableTLSCond
+    Properties:
+      Port: "2376"
+      Protocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerIntTargetGroupSwarmAPI:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 2377
+      Protocol: TCP
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerExtTargetGroupDashboard:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 3000
+      Protocol: TCP
+      HealthCheckPort: 22
+      HealthyThresholdCount: 10
+      UnhealthyThresholdCount: 10
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
+  ManagerExtTargetGroupAmplifier:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 50101
+      Protocol: TCP
+      HealthCheckPort: 22
+      HealthyThresholdCount: 10
+      UnhealthyThresholdCount: 10
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '15'
+      VpcId:
+        Ref: Vpc
   ManagerAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
@@ -1355,19 +1457,25 @@ Resources:
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MaxBatchSize: 1
-        MinInstancesInService: 0
+        MinInstancesInService: 1
         PauseTime: PT3M
         WaitOnResourceSignals: false
     Properties:
       DesiredCapacity: !Ref ManagerSize
-      HealthCheckGracePeriod: 300
+      HealthCheckGracePeriod: 480
       HealthCheckType: ELB
       LaunchConfigurationName: !Ref ManagerAsgLaunchConfig
-      MaxSize: 10
-      MinSize: 0
-      LoadBalancerNames:
-      - !Ref ManagerInternalELB
-      - !Ref ManagerExternalELB
+      MaxSize: 11
+      MinSize: 1
+      TargetGroupARNs:
+      - !Ref ManagerExtTargetGroupSSH
+      - !Ref ManagerExtTargetGroupHTTP
+      - !Ref ManagerExtTargetGroupHTTPS
+      - !If [ EnableTLSCond, !Ref ManagerExtTargetGroupDockerAPI, !Ref "AWS::NoValue" ]
+      - !If [ EnableTLSCond, !Ref ManagerIntTargetGroupDockerAPI, !Ref "AWS::NoValue" ]
+      - !Ref ManagerIntTargetGroupSwarmAPI
+      - !Ref ManagerExtTargetGroupDashboard
+      - !Ref ManagerExtTargetGroupAmplifier
       Tags:
       - Key: Name
         PropagateAtLaunch: true
@@ -1419,90 +1527,151 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-manager -o /usr/local/bin/userdata-aws-manager && chmod +x /usr/local/bin/userdata-aws-manager || true
-                - SYNC=true CA_URL="${CADnsName}" INTERNAL_LB="${ManagerInternalELB.DNSName}" EXTERNAL_LB="${ManagerExternalELB.DNSName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" APP_OPTIONS="${ApplicationOptions}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.route=true" /usr/local/bin/userdata-aws-manager || shutdown -h
+                - SYNC=true CA_URL="${CADnsName}" INTERNAL_LB="${ManagerInternalNLB.DNSName}" EXTERNAL_LB="${ManagerExternalNLB.DNSName}" SYSTEM_PRUNE="${EnableSystemPrune}" SIGNAL_URL="${ManagerWaitHandle}" APP_SIGNAL_URL="${ApplicationSignalURL}" APP_VERSION="${ApplicationVersion}" APP_OPTIONS="${ApplicationOptions}" CHANNEL="stable" PLUGINS="${DockerPlugins}" OVERLAY_NETWORKS="${OverlayNetworks}" REGION=${AWS::Region} STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} CLUSTER_SIZE="${ManagerSize}+${CoreWorkerSize}+${UserWorkerSize}" MANAGER_SIZE=${ManagerSize} DRAIN_MANAGER=${DrainManager} DOCKER_DEVICE=/dev/sdl MIRROR_REGISTRIES="${RegistryDnsName}" LABELS="amp.type.route=true" /usr/local/bin/userdata-aws-manager || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ], ApplicationSignalURL: !If [ InstallApplicationCond, !Ref ApplicationWaitHandle, "" ], CADnsName: !If [ EnableTLSCond, !Join ["", ["http://", !GetAtt CAInternalELB.DNSName]], "" ] }
-  ManagerInternalELB:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
+
+  ManagerInternalNLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
+      Type: network
       Scheme: internal
       Subnets:
         - !Ref PublicSubnet1
         - !Ref PublicSubnet2
         - !Ref PublicSubnet3
-      SecurityGroups:
-        - Ref: ManagerSecurityGroup
-      CrossZone: true
-      Listeners:
-      - LoadBalancerPort: '2375'
-        InstancePort: '2375'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '2376'
-        InstancePort: '2376'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '2377'
-        InstancePort: '2377'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      HealthCheck:
-        Target: !Join [ ":", [ "TCP", !If [ EnableTLSCond, "2376", "2375" ] ] ]
-        HealthyThreshold: 3
-        UnhealthyThreshold: 5
-        Interval: 30
-        Timeout: 5
-      ConnectionDrainingPolicy:
-        Enabled: 'true'
-        Timeout: '60'
-  ManagerExternalELB:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
+  ManagerInternalELBListenerDockerAPI:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ManagerWaitCondition
+    Condition: EnableTLSCond
     Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerIntTargetGroupDockerAPI
+      LoadBalancerArn:
+        Ref: ManagerInternalNLB
+      Port: "2376"
+      Protocol: TCP
+  ManagerInternalELBListenerSwarmAPI:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ManagerWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerIntTargetGroupSwarmAPI
+      LoadBalancerArn:
+        Ref: ManagerInternalNLB
+      Port: '2377'
+      Protocol: TCP
+
+  ManagerNLBEIP1:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  ManagerNLBEIP2:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  ManagerNLBEIP3:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  ManagerExternalNLB:
+    DependsOn: [ManagerNLBEIP1, ManagerNLBEIP2, ManagerNLBEIP3]
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: network
       Scheme: internet-facing
-      Subnets:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
-        - !Ref PublicSubnet3
-      SecurityGroups:
-        - Ref: ManagerSecurityGroup
-      CrossZone: true
-      Listeners:
-      - LoadBalancerPort: '22'
-        InstancePort: '22'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '80'
-        InstancePort: '80'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '443'
-        InstancePort: '443'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '2376'
-        InstancePort: '2376'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: !Ref MonitoringPort
-        InstancePort: '3000'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '9090'
-        InstancePort: '9090'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      - LoadBalancerPort: '50101'
-        InstancePort: '50101'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      HealthCheck:
-        Target: TCP:22
-        HealthyThreshold: 10
-        UnhealthyThreshold: 5
-        Interval: 30
-        Timeout: 5
-      ConnectionDrainingPolicy:
-        Enabled: 'true'
-        Timeout: '60'
+      SubnetMappings:
+        - AllocationId: !GetAtt
+            - ManagerNLBEIP1
+            - AllocationId
+          SubnetId: !Ref PublicSubnet1
+        - AllocationId: !GetAtt
+            - ManagerNLBEIP2
+            - AllocationId
+          SubnetId: !Ref PublicSubnet2
+        - AllocationId: !GetAtt
+            - ManagerNLBEIP3
+            - AllocationId
+          SubnetId: !Ref PublicSubnet3
+  ManagerExternalELBListenerSSH:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ManagerWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerExtTargetGroupSSH
+      LoadBalancerArn:
+        Ref: ManagerExternalNLB
+      Port: '22'
+      Protocol: TCP
+  ManagerExternalELBListenerHTTP:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ApplicationWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerExtTargetGroupHTTP
+      LoadBalancerArn:
+        Ref: ManagerExternalNLB
+      Port: '80'
+      Protocol: TCP
+  ManagerExternalELBListenerHTTPS:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ApplicationWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerExtTargetGroupHTTPS
+      LoadBalancerArn:
+        Ref: ManagerExternalNLB
+      Port: '443'
+      Protocol: TCP
+  ManagerExternalELBListenerDockerAPI:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Condition: EnableTLSCond
+    DependsOn: ManagerWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerExtTargetGroupDockerAPI
+      LoadBalancerArn:
+        Ref: ManagerExternalNLB
+      Port: '2376'
+      Protocol: TCP
+  ManagerExternalELBListenerDashboard:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ApplicationWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerExtTargetGroupDashboard
+      LoadBalancerArn:
+        Ref: ManagerExternalNLB
+      Port: !Ref MonitoringPort
+      Protocol: TCP
+  ManagerExternalELBListenerAmplifier:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    DependsOn: ApplicationWaitCondition
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: ManagerExtTargetGroupAmplifier
+      LoadBalancerArn:
+        Ref: ManagerExternalNLB
+      Port: '50101'
+      Protocol: TCP
 
   SharedFileSystem:
     Type: AWS::EFS::FileSystem
@@ -1652,14 +1821,14 @@ Metadata:
 Outputs:
   DNSTarget:
     Description: public facing endpoint for the cluster
-    Value: !GetAtt ManagerExternalELB.DNSName
+    Value: !GetAtt ManagerExternalNLB.DNSName
   InternalDockerHost:
     Description: Docker host for services requiring access to the secured API
     Value:
       Fn::Join:
         - ""
         - - "tcp://"
-          - !GetAtt ManagerInternalELB.DNSName
+          - !GetAtt ManagerInternalNLB.DNSName
           - ":2376"
   #PKITarget:
     #Description: public facing endpoint for the PKI service
@@ -1675,7 +1844,7 @@ Outputs:
     Value:
       Fn::Join:
         - ':'
-        - - !GetAtt ManagerExternalELB.DNSName
+        - - !GetAtt ManagerExternalNLB.DNSName
           - !Ref MonitoringPort
   VpcId:
     Description: VPC ID
