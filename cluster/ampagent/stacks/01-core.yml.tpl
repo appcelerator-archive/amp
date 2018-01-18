@@ -14,8 +14,10 @@ secrets:
   certificate_amp:
     external: true
 
+{{- if eq .DeploymentMode "single" }}
 volumes:
   etcd-data:
+{{- end }}
 
 services:
 
@@ -24,8 +26,10 @@ services:
     networks:
       - core
       - monit
+{{- if eq .DeploymentMode "single" }}
     volumes:
       - etcd-data:/data
+{{- end }}
     environment:
       SERVICE_NAME: "etcd"
       MIN_SEEDS_COUNT: {{ if eq .DeploymentMode "cluster" }}3{{ else }}1{{ end }}
