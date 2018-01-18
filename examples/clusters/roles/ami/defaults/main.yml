@@ -1,6 +1,7 @@
 ---
 ## Docker Channel: stable, edge, test, experimental
 docker_channel: "stable"
+docker_version: "latest"
 docker_url: "https://get.docker.com"
 
 ## AWS Region where the build should be done

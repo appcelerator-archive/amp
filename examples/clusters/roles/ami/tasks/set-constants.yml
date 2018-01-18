@@ -4,3 +4,6 @@
     timestamp: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
   changed_when: false
 
+- debug: msg="Force install version {{ docker_version }}"
+  when: "docker_version is defined"
+  changed_when: false

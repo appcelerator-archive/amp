@@ -70,6 +70,12 @@ ec2_key_name: "KEY_NAME"
 
 Once done, copy the AMI Id in the cloudformation template (aws-swarm-asg.yml).
 
+Docker will be installed with the latest version from the stable channel. If you want to build it with a specific version, you can add this line to your variables.yml:
+
+```
+docker_version: "17.09.1"
+```
+
 ## Registry
 
 An option of the template is the inclusion of a Docker registry.
