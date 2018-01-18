@@ -37,6 +37,7 @@ type InstallOptions struct {
 	NoMetrics     bool
 	NoProxy       bool
 	SubnetPattern string
+	NoRollback    bool
 }
 
 var InstallOpts = &InstallOptions{}
@@ -74,8 +75,11 @@ func Install(cmd *cobra.Command, args []string) error {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for range c {
-			log.Println("\nReceived an interrupt signal - removing AMP services")
-			stack.RunRemove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace}})
+			log.Println("\nReceived an interrupt signal")
+			if !InstallOpts.NoRollback {
+				log.Println("Removing AMP services")
+				stack.RunRemove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace}})
+			}
 			os.Exit(1)
 		}
 	}()
@@ -99,7 +103,10 @@ func Install(cmd *cobra.Command, args []string) error {
 		}
 		log.Println("Deploying stack", stackFile)
 		if err := deploy(dockerCli, stackFile, namespace); err != nil {
-			stack.RunRemove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace}})
+			if !InstallOpts.NoRollback {
+				log.Println("Removing AMP services")
+				stack.RunRemove(dockerCli, stack.RemoveOptions{Namespaces: []string{namespace}})
+			}
 			return err
 		}
 	}

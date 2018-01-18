@@ -131,6 +131,7 @@ func main() {
 	initCmd.PersistentFlags().BoolVar(&opts.NoLogs, "no-logs", false, "Don't deploy logs stack")
 	initCmd.PersistentFlags().BoolVar(&opts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
 	initCmd.PersistentFlags().BoolVar(&opts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
+	initCmd.PersistentFlags().BoolVar(&opts.NoRollback, "no-rollback", false, "Don't rollback on error")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",

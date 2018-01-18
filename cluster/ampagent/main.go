@@ -30,6 +30,7 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoMetrics, "no-metrics", false, "Don't deploy metrics stack")
 	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoProxy, "no-proxy", false, "Don't deploy proxy stack")
 	rootCmd.PersistentFlags().StringVar(&cmd.InstallOpts.SubnetPattern, "subnet-pattern", DefaultSubnetPattern, "Subnet pattern for overlay networks, should contain a single %d")
+	rootCmd.PersistentFlags().BoolVar(&cmd.InstallOpts.NoRollback, "no-rollback", false, "Don't rollback in case of errors")
 
 	// Environment variables
 	if os.Getenv("TAG") == "" { // If TAG is undefined, use the current project version
