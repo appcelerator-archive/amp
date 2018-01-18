@@ -190,7 +190,7 @@ services:
           memory: 15M
 
   alertmanager:
-    image: prom/alertmanager:v0.11.0
+    image: prom/alertmanager:v0.13.0
     networks:
       - core
     volumes:
@@ -218,9 +218,9 @@ services:
       - source: alertmanager_yml
         target: alertmanager.yml
         mode: 0400
-    command: [ "-config.file=/run/secrets/alertmanager.yml",
-             "-storage.path=/alertmanager",
-             "-web.external-url=http://localhost:9093" ]
+    command: [ "--config.file=/run/secrets/alertmanager.yml",
+             "--storage.path=/alertmanager",
+             "--web.external-url=http://localhost:9093" ]
 
   grafana:
     image: appcelerator/grafana-amp:1.2.12

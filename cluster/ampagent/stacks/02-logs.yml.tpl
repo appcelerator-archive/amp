@@ -15,7 +15,7 @@ volumes:
 services:
 
   elasticsearch:
-    image: appcelerator/elasticsearch-amp:6.1.0
+    image: appcelerator/elasticsearch-amp:6.1.2
     networks:
       - monit
       - core
@@ -103,7 +103,7 @@ services:
       io.amp.role: "infrastructure"
 
   kibana:
-    image: appcelerator/kibana:6.1.0
+    image: appcelerator/kibana:6.1.2
     networks:
       - core
       - public
