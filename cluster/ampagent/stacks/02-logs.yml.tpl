@@ -23,9 +23,6 @@ services:
       - elasticsearch-data:/opt/elasticsearch/data
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "30s"
-      amp.service.stabilize.timeout: "180s"
-      amp.service.pull.timeout: "120s"
     environment:
 {{- if eq .DeploymentMode "cluster" }}
       MIN_MASTER_NODES: 2
@@ -54,6 +51,14 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.search == true
+{{- if eq .DeploymentMode "cluster" }}
+      resources:
+        limits:
+          cpus: '1'
+        reservations:
+          cpus: '0.5'
+          memory: '2G'
+{{- end }}
 
   nats:
     image: appcelerator/amp-nats-streaming:v0.7.0
@@ -61,8 +66,6 @@ services:
       - core
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: replicated
       replicas: 1
@@ -71,6 +74,14 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.mq == true
+{{- if eq .DeploymentMode "cluster" }}
+      resources:
+        limits:
+          cpus: '1.5'
+        reservations:
+          cpus: '0.4'
+          memory: '512M'
+{{- end }}
 
   ampbeat:
     image: appcelerator/ampbeat:${TAG:-latest}
@@ -84,10 +95,12 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: '20M'
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
 
   kibana:
     image: appcelerator/kibana:6.1.0
@@ -103,11 +116,17 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '1'
+          memory: 200M
+{{- if eq .DeploymentMode "cluster" }}
+        reservations:
+          cpus: '0.05'
+          memory: 200M
+{{- end }}
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "60s"
-      amp.service.pull.timeout: "120s"
     environment:
       ELASTICSEARCH_URL: "http://elasticsearch:9200"
       SERVICE_PORTS: 5601
@@ -121,10 +140,12 @@ services:
       mode: global
       labels:
         io.amp.role: "infrastructure"
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: 15M
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     volumes:
       - ampagent:/containers
       - /var/run/docker.sock:/var/run/docker.sock

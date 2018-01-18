@@ -49,8 +49,6 @@ services:
       - "9090:9090"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "45s"
     deploy:
       mode: replicated
       replicas: 1
@@ -59,6 +57,12 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.metrics == true
+{{- if eq .DeploymentMode "cluster" }}
+      resources:
+        reservations:
+          cpus: '0.5'
+          memory: 1.5G
+{{- end }}
     configs:
       - source: prometheus_alerts_rules
         target: /etc/prometheus/alerts.rules
@@ -71,8 +75,6 @@ services:
       - monit
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -86,6 +88,10 @@ services:
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "8080"
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 200M
 
   docker-engine:
     image: appcelerator/socat:1.0.0
@@ -96,13 +102,15 @@ services:
     #  - "4999:4999"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: global
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "4999"
+      resources:
+        limits:
+          cpus: '0.02'
+          memory: 15M
 
   haproxy_exporter:
     image: prom/haproxy-exporter:v0.8.0
@@ -115,8 +123,6 @@ services:
       #- published: 9101
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: replicated
       replicas: 1
@@ -127,6 +133,10 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 10M
 
   nats_exporter:
     image: appcelerator/prometheus-nats-exporter:latest
@@ -139,8 +149,6 @@ services:
       #- published: 7777
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: replicated
       replicas: 1
@@ -151,6 +159,10 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 10M
 
   nodes:
     image: prom/node-exporter:v0.15.2
@@ -167,13 +179,15 @@ services:
     command: [ "--path.procfs", "/host/proc", "--path.sysfs", "/host/sys", "--collector.filesystem.ignored-mount-points", "^/(sys|proc|dev|host|etc|var|rootfs/var/lib/docker|rootfs/run/docker/netns|rootfs/sys/kernel/debug)($$|/)"]
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "20s"
     deploy:
       mode: global
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "9100"
+      resources:
+        limits:
+          cpus: '0.03'
+          memory: 15M
 
   alertmanager:
     image: prom/alertmanager:v0.11.0
@@ -188,8 +202,6 @@ services:
       SERVICE_PORTS: "9093"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "3s"
-      amp.service.stabilize.timeout: "30s"
     deploy:
       mode: replicated
       replicas: 1
@@ -198,6 +210,10 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 30M
     secrets:
       - source: alertmanager_yml
         target: alertmanager.yml
@@ -220,9 +236,6 @@ services:
       - "3000:3000"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "8s"
-      amp.service.stabilize.timeout: "60s"
-      amp.service.pull.timeout: "120s"
     deploy:
       mode: replicated
       replicas: 1
@@ -231,3 +244,12 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+{{- if eq .DeploymentMode "cluster" }}
+        reservations:
+          cpus: '0.05'
+          memory: 50M
+{{- end }}
