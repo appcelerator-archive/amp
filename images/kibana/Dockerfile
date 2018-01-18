@@ -5,7 +5,7 @@ RUN apk --no-cache add nodejs-current freetype-dev fontconfig-dev
 ENV ELASTIC_CONTAINER true
 ENV ELASTICSEARCH_URL http://elasticsearch:9200
 ENV KIBANA_MAJOR 6.1
-ENV KIBANA_VERSION 6.1.0
+ENV KIBANA_VERSION 6.1.2
 
 # Kibana installation
 RUN mkdir -p /opt/kibana && adduser -D -h /opt/kibana -s /sbin/nologin elastico && rm -rf /opt/kibana
