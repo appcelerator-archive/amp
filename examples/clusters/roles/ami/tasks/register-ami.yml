@@ -1,7 +1,7 @@
 ---
 - name: Build AMI name
   set_fact:
-    image_name: "{{ image_name_prefix }}-{{ timestamp }}"
+    image_name: "{{ image_name_prefix }}-{{ docker_version }}-{{ timestamp }}"
   changed_when: false
 
 - name: "Register AMI from snapshot {{ root_snapshot_id }}"

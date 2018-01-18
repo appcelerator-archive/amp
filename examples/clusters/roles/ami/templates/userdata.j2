@@ -25,6 +25,17 @@ write_files:
     content: {{ grub_config }}
     permissions: "0644"
     owner: "root"
+{% if docker_version != "latest" %}
+write_files:
+  - path: "/etc/apt/preferences.d/docker"
+    permissions: "0644"
+    owner: "root"
+    content: |
+        Package: docker-ce
+        Pin: version {{ docker_version }}~*
+        Pin-Priority: 1000
+{% endif %}
+
 runcmd:
   - _ok () { cd /tmp ; echo SUCCESS > index.html ; /usr/bin/python3 -m http.server 80 ; }
   - _ko () { cd /tmp ; echo FAIL > index.html ; /usr/bin/python3 -m http.server 80 ; }
