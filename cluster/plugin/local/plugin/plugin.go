@@ -49,6 +49,7 @@ type RequestOptions struct {
 	NoLogs        bool
 	NoMetrics     bool
 	NoProxy       bool
+	NoRollback    bool
 }
 
 type FullSwarmInfo struct {
@@ -178,6 +179,9 @@ func RunAgent(ctx context.Context, c *docker.Client, action string, opts *Reques
 	}
 	if opts.NoProxy {
 		actionArgs = append(actionArgs, "--no-proxy")
+	}
+	if opts.NoRollback {
+		actionArgs = append(actionArgs, "--no-rollback")
 	}
 	switch action {
 	case "install":
