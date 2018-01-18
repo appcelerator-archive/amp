@@ -34,8 +34,6 @@ services:
       - "http://etcd:2379"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "10s"
-      amp.service.stabilize.timeout: "40s"
     deploy:
       mode: replicated
 {{- if eq .DeploymentMode "cluster" }}
@@ -56,6 +54,11 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.kv == true
+{{- if eq .DeploymentMode "cluster" }}
+      resources:
+        reservations:
+          memory: '80M'
+{{- end }}
 
   amplifier:
     image: appcelerator/amplifier:${TAG:-latest}
@@ -79,8 +82,6 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "4s"
-      amp.service.stabilize.timeout: "30s"
     deploy:
       mode: global
       labels:
@@ -91,6 +92,14 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.api == true
+      resources:
+        limits:
+          memory: '500M'
+{{- if eq .DeploymentMode "cluster" }}
+        reservations:
+          cpus: '0.15'
+          memory: '150M'
+{{- end }}
     secrets:
       - source: amplifier_yml
         target: amplifier.yml
@@ -106,8 +115,6 @@ services:
       - public
     labels:
       io.amp.role: "infrastructure"
-      amp.service.stabilize.delay: "5s"
-      amp.service.stabilize.timeout: "20s"
     environment:
       SERVICE_PORTS: 80
       VIRTUAL_HOST: "https://gw.*,http://gw.*"
@@ -120,3 +127,11 @@ services:
       placement:
         constraints:
         - node.labels.amp.type.core == true
+      resources:
+        limits:
+          memory: '100M'
+{{- if eq .DeploymentMode "cluster" }}
+        reservations:
+          cpus: '0.05'
+          memory: '20M'
+{{- end }}

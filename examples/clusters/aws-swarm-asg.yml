@@ -138,7 +138,6 @@ Parameters:
   ManagerInstanceType:
     Type: String
     AllowedValues:
-    - t2.nano
     - t2.micro
     - t2.small
     - t2.medium
@@ -168,12 +167,7 @@ Parameters:
   CoreWorkerInstanceType:
     Type: String
     AllowedValues:
-    - t2.nano
-    - t2.micro
-    - t2.small
-    - t2.medium
     - t2.large
-    - m3.medium
     - m4.large
     - m4.xlarge
     - m4.2xlarge
