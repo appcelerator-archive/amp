@@ -40,7 +40,7 @@ services:
       replicas: 3
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 45s
       restart_policy:
         condition: any
         delay: 25s
