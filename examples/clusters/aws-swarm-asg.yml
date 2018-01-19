@@ -295,7 +295,7 @@ Parameters:
   TLSRotation:
     Type: String
     Description: "Expiration of Docker API certificates issued by the PKI"
-    Default: "168h"
+    Default: "8760h"
 
 Conditions:
   InstallApplicationCond: !Or [ !Equals [ !Ref InstallApplication, "yes" ], !Equals [ !Ref InstallApplication, "true" ] ]
@@ -1088,7 +1088,7 @@ Resources:
               repo_upgrade: none
               runcmd:
                 - curl -sf ${ConfigurationURL}/userdata-aws-ca -o /usr/local/bin/userdata-aws-ca && chmod +x /usr/local/bin/userdata-aws-ca || true
-                - SYSTEM_PRUNE="${EnableSystemPrune}" SYNC=true SIGNAL_URL="${CAWaitHandle}" CHANNEL="stable" PLUGINS="rexray/ebs" REGION=${AWS::Region} STACK_ID="${AWS::StackId}" STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-ca || shutdown -h
+                - SYSTEM_PRUNE="${EnableSystemPrune}" SYNC=true SIGNAL_URL="${CAWaitHandle}" CHANNEL="stable" PLUGINS="rexray/ebs" REGION=${AWS::Region} STACK_ID="${AWS::StackId}" STACK_NAME=${AWS::StackName} VPC_ID=${Vpc} MIRROR_REGISTRIES="${RegistryDnsName}" /usr/local/bin/userdata-aws-ca EXPIRY_CLIENT="$TLSRotation" EXPIRY_SERVER="$TLSRotation" || shutdown -h
             - { RegistryDnsName: !If [ MirrorRegistryCond, !Join ["", ["http://", !GetAtt RegistryInternalELB.DNSName]], "" ] }
   CAInternalELB:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
