@@ -88,6 +88,7 @@ services:
       labels:
         io.amp.role: "infrastructure"
         io.amp.metrics.port: "8080"
+        io.amp.metrics.drop: "container_network_tcp_usage_total|container_network_udp_usage_total"
       resources:
         limits:
           cpus: '0.10'

@@ -32,10 +32,13 @@ const (
 	metricsPortLabel     = "io.amp.metrics.port"
 	metricsPathLabel     = "io.amp.metrics.path"
 	metricsModeLabel     = "io.amp.metrics.mode"
+	metricsDropLabel     = "io.amp.metrics.drop"
 	metricsModeTasks     = "tasks"
 	metricsModeExporter  = "exporter"
 	externalURLEnv       = "PROMETHEUS_EXTERNAL_URL"
 	externalURLOption    = "--web.external-url"
+	metaLabelName        = "__name__"
+	relabelActionDrop    = "drop"
 )
 
 var prometheusArgs = []string{
@@ -52,11 +55,12 @@ type Inventory struct {
 }
 
 type Job struct {
-	Name           string
-	Mode           string
-	StaticConfigs  []StaticConfig
-	RelabelConfigs []RelabelConfig
-	MetricsPath    string
+	Name                  string
+	Mode                  string
+	StaticConfigs         []StaticConfig
+	RelabelConfigs        []RelabelConfig
+	MetricsRelabelConfigs []RelabelConfig
+	MetricsPath           string
 }
 
 // static config for a prometheus job
@@ -71,6 +75,8 @@ type RelabelConfig struct {
 	Separator    string
 	TargetLabel  string
 	Replacement  string
+	Regex        string
+	Action       string
 }
 
 type Target struct {
@@ -114,6 +120,11 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 		if !ok {
 			metricsMode = metricsModeTasks
 		}
+		// metrics to ignore
+		metricsToDrop, ok := service.Spec.Annotations.Labels[metricsDropLabel]
+		if !ok {
+			metricsToDrop = ""
+		}
 		fmt.Printf("discovered service %s on port %d and path %s, mode %s\n", name, metricsPort, metricsPath, metricsMode)
 		s, ok := networkResource.Services[name]
 		if !ok {
@@ -143,6 +154,10 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 			// all "tasks" jobs have the same relabel config
 			job.RelabelConfigs = append(job.RelabelConfigs,
 				RelabelConfig{SourceLabels: []string{"hostip"}, Separator: "@", TargetLabel: "instance"})
+			if metricsToDrop != "" {
+				job.MetricsRelabelConfigs = append(job.MetricsRelabelConfigs,
+					RelabelConfig{SourceLabels: []string{metaLabelName}, Regex: metricsToDrop, Action: relabelActionDrop})
+			}
 			jobs = append(jobs, job)
 		case metricsModeExporter:
 			shortName := strings.TrimSuffix(strings.TrimPrefix(name, fmt.Sprintf("%s_", stackName)), "_exporter")
@@ -155,6 +170,10 @@ func prepareJobs(client *docker.Docker, networkResource types.NetworkResource) (
 			}
 			job.RelabelConfigs = append(job.RelabelConfigs,
 				RelabelConfig{Replacement: shortName, TargetLabel: "instance"})
+			if metricsToDrop != "" {
+				job.MetricsRelabelConfigs = append(job.MetricsRelabelConfigs,
+					RelabelConfig{SourceLabels: []string{metaLabelName}, Regex: metricsToDrop, Action: relabelActionDrop})
+			}
 			jobs = append(jobs, job)
 		}
 	}
