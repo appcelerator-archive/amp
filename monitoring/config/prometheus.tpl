@@ -46,6 +46,12 @@ scrape_configs:
         separator: '{{ .Separator }}'
         target_label: {{ .TargetLabel }}
 {{- end }}
+{{- range .MetricsRelabelConfigs }}
+    metric_relabel_configs:
+      - source_labels: [ {{ StringsJoin .SourceLabels ", " }} ]
+        regex: {{ .Regex }}
+        action: {{ .Action }}
+{{- end }}
 {{/* exporter service in front of a real service */}}
 {{- else if eq .Mode "exporter" }}
   - job_name: '{{ .Name }}'
