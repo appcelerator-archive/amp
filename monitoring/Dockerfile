@@ -1,4 +1,4 @@
-FROM appcelerator/prometheus:2.0.0_alpine37
+FROM appcelerator/prometheus:2.1.0
 
 COPY promctl.alpine /bin/promctl
 COPY config/prometheus.yml  /etc/prometheus/prometheus.yml
