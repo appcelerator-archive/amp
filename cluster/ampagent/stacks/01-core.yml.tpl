@@ -22,7 +22,7 @@ volumes:
 services:
 
   etcd:
-    image: appcelerator/etcd:3.2.15-recovery
+    image: appcelerator/etcd:3.2.16
     networks:
       - core
       - monit
