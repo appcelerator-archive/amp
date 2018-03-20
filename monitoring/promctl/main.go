@@ -257,6 +257,7 @@ func main() {
 			client := docker.NewEnvClient()
 			manager, err := isAManager(client)
 			if !manager || err != nil {
+				fmt.Printf("Docker Swarm manager connection failed: %s\n", err.Error())
 				return fmt.Errorf("service discovery requires a connection to a manager engine socket")
 			}
 			stop := make(chan os.Signal, 1)
