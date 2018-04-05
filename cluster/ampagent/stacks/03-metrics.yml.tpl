@@ -69,7 +69,7 @@ services:
         mode: 0400
 
   cadvisor:
-    image: google/cadvisor:v0.28.3
+    image: google/cadvisor:v0.29.0
     networks:
       - core
       - monit
@@ -114,7 +114,7 @@ services:
           memory: 15M
 
   haproxy_exporter:
-    image: prom/haproxy-exporter:v0.8.0
+    image: prom/haproxy-exporter:v0.9.0
     command: ["--haproxy.scrape-uri", "http://stats:stats@proxy:1936/haproxy?stats;csv"]
     networks:
       - monit
@@ -191,7 +191,7 @@ services:
           memory: 15M
 
   alertmanager:
-    image: prom/alertmanager:v0.13.0
+    image: prom/alertmanager:v0.14.0
     networks:
       - core
     volumes:
