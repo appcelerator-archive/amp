@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -22,23 +21,28 @@ import (
 )
 
 const (
-	defaultTemplate      = "/etc/prometheus/prometheus.tpl"
-	defaultConfiguration = "/etc/prometheus/prometheus.yml"
-	defaultPeriod        = 1
-	dockerForMacIP       = "192.168.65.1"
-	prometheusCmd        = "/bin/prometheus"
-	monitoringNetwork    = "monit"
-	stackName            = "amp"
-	metricsPortLabel     = "io.amp.metrics.port"
-	metricsPathLabel     = "io.amp.metrics.path"
-	metricsModeLabel     = "io.amp.metrics.mode"
-	metricsDropLabel     = "io.amp.metrics.drop"
-	metricsModeTasks     = "tasks"
-	metricsModeExporter  = "exporter"
-	externalURLEnv       = "PROMETHEUS_EXTERNAL_URL"
-	externalURLOption    = "--web.external-url"
-	metaLabelName        = "__name__"
-	relabelActionDrop    = "drop"
+	defaultTemplate          = "/etc/prometheus/prometheus.tpl"
+	defaultConfiguration     = "/etc/prometheus/prometheus.yml"
+	defaultPeriod            = 1
+	defaultMonitoringNetwork = "monit"
+	defaultStackName         = "amp"
+	dockerForMacIP           = "192.168.65.1"
+	prometheusCmd            = "/bin/prometheus"
+	metricsPortLabel         = "io.amp.metrics.port"
+	metricsPathLabel         = "io.amp.metrics.path"
+	metricsModeLabel         = "io.amp.metrics.mode"
+	metricsDropLabel         = "io.amp.metrics.drop"
+	metricsModeTasks         = "tasks"
+	metricsModeExporter      = "exporter"
+	externalURLEnv           = "PROMETHEUS_EXTERNAL_URL"
+	externalURLOption        = "--web.external-url"
+	metaLabelName            = "__name__"
+	relabelActionDrop        = "drop"
+)
+
+var (
+	monitoringNetwork string
+	stackName         string
 )
 
 var prometheusArgs = []string{
@@ -193,7 +197,7 @@ func update(client *docker.Docker, configurationTemplate string, configuration s
 		return err
 	}
 	if len(networkResources) != 1 {
-		return errors.New("network lookup failed")
+		return fmt.Errorf("network lookup failed (%s)", monitoringNetwork)
 	}
 	networkId := networkResources[0].ID
 	networkResource, err := client.GetClient().NetworkInspect(context.Background(), networkId, types.NetworkInspectOptions{Verbose: true})
@@ -293,6 +297,8 @@ func main() {
 	RootCmd.PersistentFlags().StringVarP(&configuration, "config", "c", defaultConfiguration, "config file")
 	RootCmd.PersistentFlags().StringVarP(&configurationTemplate, "template", "t", defaultTemplate, "template file")
 	RootCmd.PersistentFlags().Int32VarP(&period, "period", "p", defaultPeriod, "reload period in minute")
+	RootCmd.PersistentFlags().StringVarP(&monitoringNetwork, "network", "n", defaultMonitoringNetwork, "Overlay network for monitoring")
+	RootCmd.PersistentFlags().StringVarP(&stackName, "stack-name", "s", defaultStackName, "Stack name (for prefix trimming)")
 
 	// Set Prometheus external URL if provided
 	if url := os.Getenv(externalURLEnv); url != "" {
