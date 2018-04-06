@@ -1,6 +1,7 @@
-FROM golang:1.9.2-alpine AS builder
+FROM golang:1.10.1-alpine AS builder
 
-ENV VERSION v0.6.0
+ENV VERSION v0.9.2
+RUN apk update && apk add git
 RUN go get -d github.com/nats-io/nats-streaming-server
 WORKDIR /go/src/github.com/nats-io/nats-streaming-server
 RUN git checkout ${VERSION}
