@@ -61,7 +61,7 @@ services:
 {{- end }}
 
   nats:
-    image: appcelerator/amp-nats-streaming:v0.7.0
+    image: appcelerator/amp-nats-streaming:v0.9.2
     networks:
       - core
     labels:
