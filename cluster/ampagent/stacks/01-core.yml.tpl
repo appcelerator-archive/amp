@@ -65,7 +65,7 @@ services:
 {{- end }}
 
   amplifier:
-    image: appcelerator/amplifier:${TAG:-latest}
+    image: appcelerator/amplifier:${TAG:-0.18.0}
     networks:
       - core
       - monit
@@ -113,7 +113,7 @@ services:
         mode: 0400
 
   gateway:
-    image: appcelerator/gateway:${TAG:-latest}
+    image: appcelerator/gateway:${TAG:-0.18.0}
     networks:
       - core
       - public

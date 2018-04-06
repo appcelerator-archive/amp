@@ -84,7 +84,7 @@ services:
 {{- end }}
 
   ampbeat:
-    image: appcelerator/ampbeat:${TAG:-latest}
+    image: appcelerator/ampbeat:${TAG:-0.18.0}
     networks:
       - core
     deploy:
@@ -133,7 +133,7 @@ services:
       VIRTUAL_HOST: "http://kibana.*,https://kibana.*"
 
   agent:
-    image: appcelerator/agent:${TAG:-latest}
+    image: appcelerator/agent:${TAG:-0.18.0}
     networks:
       - core
     deploy:

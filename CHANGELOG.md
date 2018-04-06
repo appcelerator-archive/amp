@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.18.0 (2018-04-05)
+
+* fixes in pkg/docker package to allow connection with TLS options. Necessary for amplifier and prometheus connection to a secured Swarm manager
+* Fix AMP-102 (enable TLS on manager nodes), see details in https://techweb.axway.com/confluence/display/AMP/Cluster+with+secured+Docker+API
+* Fix AMP-132 (AMI updated to Docker CE 17.12.1)
+* Internal PKI for Docker daemon certificates
+* all manager nodes expose the engine API with TLS enabled
+* all nodes get a unique client certificate give access to the manager nodes API
+* Fix AMP-133 (enable enhanced networking)
+* Fix AMP-99 (enable gen5 instance types: m5 and c5)
+* templating for core stack files, see details in https://techweb.axway.com/confluence/display/AMP/Cluster+with+secured+Docker+API
+* add useful information in the output of docker cluster output
+* minor fixes in existing dashboards
+* new dashboard for monitoring coverage: it displays the percentage of cadvisor tasks on swarm nodes (should be 100% on healthy clusters)
+* Fix AMP-141 (amp overlay network can't default to /24)
+* Detection of cloud provider based on /sys/hypervision/uuid may fail (it's maybe related to ENA). In this case, falling back to /sys/devices/virtual/dmi/id/product_uuid provides the information
+* new command: amp cluster node cleanup, Removes any node in the Down status
+* Deployment on AWS can include a mirror registry, only available from inside the VPC. This adds an image command to the CLI, allowing to list, push or remove images from the mirror registry with the AMP authorization model
+* Replacement of classic ELB with network LB for the manager nodes (internal and external).
+* NLB bring a few advantages: less expensive, low latency, high throughput, static IPs, zonal isolation
+* bump dependencies: elasticsearch 6.2.1, nats v0.9.2, prometheus 2.2.1, grafana 5.0.4, etcd 3.2.18
+
 ## 0.17.0 (2017-11-29)
 
 * Public REST API documentation
